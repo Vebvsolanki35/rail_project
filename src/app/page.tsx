@@ -30,6 +30,7 @@ import {
   Timer,
   TrafficCone,
   TrainFront,
+  Users,
   Waves,
   Wrench,
   Zap,
@@ -167,6 +168,12 @@ export default function Landing() {
               className="flex items-center gap-2 rounded-xl border border-edge bg-panel px-6 py-3.5 text-sm font-semibold text-ink shadow-sm transition hover:bg-abyss"
             >
               <Siren size={16} className="text-red-500" /> {t("btn.test.crisis")}
+            </Link>
+            <Link
+              href="/trains"
+              className="flex items-center gap-2 rounded-xl border border-mint/40 bg-mint/10 px-6 py-3.5 text-sm font-semibold text-mint shadow-sm transition hover:bg-mint/15"
+            >
+              <Users size={16} /> {t("btn.citizen")}
             </Link>
           </motion.div>
 
@@ -329,7 +336,7 @@ export default function Landing() {
             {[
               { k: "T+4h", num: 1 },
               { k: "7 Days", num: 2 },
-              { k: "90 Days", num: 3 },
+              { k: "28 Days", num: 3 },
               { k: "< 60s", num: 4 },
             ].map((h, i) => (
               <motion.div key={h.k} {...fade(0.07 * i)} className="panel p-5 relative overflow-hidden">
@@ -406,6 +413,12 @@ export default function Landing() {
               className="flex items-center gap-2 rounded-xl border border-edge bg-panel px-6 py-3.5 text-xs font-semibold text-ink transition hover:bg-abyss"
             >
               <HardHat size={14} className="text-primary" /> {t("btn.gangman.app")} <ArrowRight size={14} />
+            </Link>
+            <Link
+              href="/trains"
+              className="flex items-center gap-2 rounded-xl border border-mint/40 bg-mint/10 px-6 py-3.5 text-xs font-semibold text-mint transition hover:bg-mint/15"
+            >
+              <Users size={14} /> {t("btn.citizen")} <ArrowRight size={14} />
             </Link>
           </div>
         </div>

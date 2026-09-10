@@ -29,6 +29,10 @@ const dict: Record<string, { en: string; hi: string }> = {
   "nav.overview.hint": { en: "About & Docs", hi: "जानकारी और दस्तावेज़" },
   "nav.operations": { en: "Operations", hi: "संचालन" },
   "nav.system": { en: "System", hi: "सिस्टम" },
+  "nav.public": { en: "Public", hi: "सार्वजनिक" },
+  "nav.trains": { en: "Citizen Train View", hi: "नागरिक ट्रेन व्यू" },
+  "nav.trains.hint": { en: "Passenger journey status", hi: "यात्री यात्रा स्थिति" },
+  "btn.citizen": { en: "Citizen Train View", hi: "नागरिक ट्रेन व्यू" },
 
   /* ─── Roles ─── */
   "role.drm": { en: "DRM / Admin", hi: "DRM / प्रशासक" },
@@ -245,9 +249,9 @@ const dict: Record<string, { en: string; hi: string }> = {
   "hz.2.badge": { en: "Weekly Plan", hi: "साप्ताहिक योजना" },
   "hz.2.title": { en: "7-Day Coordinated Plan", hi: "7 दिन की समन्वित योजना" },
   "hz.2.desc": { en: "Multi-department schedule that's been tested and shared with Section Controllers and field workers.", hi: "बहु-विभाग शेड्यूल जो परीक्षित है और सेक्शन कंट्रोलर्स और फ़ील्ड कर्मियों के साथ साझा किया गया है।" },
-  "hz.3.badge": { en: "Seasonal Plan", hi: "मौसमी योजना" },
-  "hz.3.title": { en: "90-Day Weather-Based Plan", hi: "90 दिन मौसम-आधारित योजना" },
-  "hz.3.desc": { en: "Winter focuses on rail crack detection in fog; summer checks wire sag; monsoon monitors bridge foundations.", hi: "सर्दियों में कोहरे में रेल दरार जांच; गर्मियों में तार झुकाव जांच; मानसून में पुल नींव निगरानी।" },
+  "hz.3.badge": { en: "Monthly Plan", hi: "मासिक योजना" },
+  "hz.3.title": { en: "28-Day Monthly Plan", hi: "28 दिन मासिक योजना" },
+  "hz.3.desc": { en: "Four-week rolling maintenance calendar — winter prioritises fog-time rail crack detection, summer OHE sag, monsoon bridge foundations.", hi: "चार-सप्ताह रोलिंग रखरखाव कैलेंडर — सर्दियों में कोहरे में रेल दरार जांच; गर्मियों में तार झुकाव जांच; मानसून में पुल नींव निगरानी।" },
   "hz.4.badge": { en: "Crisis Mode", hi: "आपातकालीन मोड" },
   "hz.4.title": { en: "Multi-Crisis Handler", hi: "बहु-संकट हैंडलर" },
   "hz.4.desc": { en: "When a rail crack happens during fog with a VIP train incoming, the system reroutes and holds trains automatically in seconds.", hi: "जब VIP ट्रेन आने के दौरान कोहरे में रेल दरार होती है, तो सिस्टम सेकंडों में ट्रेनों को रीरूट करता है और रोकता है।" },

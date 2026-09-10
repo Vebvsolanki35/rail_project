@@ -195,7 +195,7 @@ export default function PlannerClient({ initial }: { initial: DashboardState }) 
                     horizon === h ? "bg-amber-500 text-slate-950 shadow-sm" : "text-dim hover:text-ink"
                   }`}
                 >
-                  {h === "ROLLING" ? "4H Rolling" : h === "WEEKLY" ? "7-Day Weekly" : "90-Day Seasonal"}
+                  {h === "ROLLING" ? "4H Rolling" : h === "WEEKLY" ? "7-Day Weekly" : "28-Day Monthly"}
                 </button>
               ))}
             </div>

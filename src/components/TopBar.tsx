@@ -24,7 +24,7 @@ export default function TopBar() {
   const [planStatus, setPlanStatus] = useState<string>("PROPOSED");
   const [vetoBusy, setVetoBusy] = useState(false);
   const [vetoOpen, setVetoOpen] = useState(false);
-  const [vetoReason, setVetoReason] = useState(VETO_REASONS_KEYS[0]);
+  const [vetoReason, setVetoReason] = useState<(typeof VETO_REASONS_KEYS)[number]>(VETO_REASONS_KEYS[0]);
   const [vetoNote, setVetoNote] = useState("");
 
   useEffect(() => {
