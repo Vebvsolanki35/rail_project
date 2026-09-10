@@ -37,6 +37,7 @@ node scripts/verify.mjs http://localhost:3000   # 15 invariant checks against li
 | Section Inspector | `/field` | beat-focused map, patroller inbox, crew allotment (AI-recommended), before/after sign-off with fraud checks |
 | Maintenance Karmi | `/jobs` | GenAI job permits, GPS proximity gate, before/after photo capture, offline queue, auto-escalation |
 | Track Patroller | `/patrol` | phone-framed defect reporting with GPS lock (feeds Step 0) |
+| Citizen / Passenger | `/trains` | public Citizen Train View — search a train, see journey progress, route timeline and how planned maintenance may affect the trip (GREEN/YELLOW/RED). Clearly labelled Prototype Data; no internal controls exposed |
 
 ## Architecture
 
@@ -44,7 +45,7 @@ node scripts/verify.mjs http://localhost:3000   # 15 invariant checks against li
 TMS · TDMS · SMMS · COA · FOIS · IMD          (contracts: src/lib/integrations/contracts.ts)
         └─ federated data lake (PostgreSQL via Drizzle ORM)
                  │
-   ml.ts        → logistic-regression risk model (batch GD, L2, 500 epochs,
+   ml.ts        → logistic-regression risk model (batch GD, L2, 700 epochs,
                  fitted in-process on 2,400 labeled work-order outcomes,
                  80/20 holdout accuracy/AUC computed at runtime — see model card
                  on the Planner page)
@@ -112,6 +113,7 @@ the real Yamuna course, and 24 real trains (12951/52 Mumbai Rajdhani, 12301/02 H
 · `POST /api/whatif` · `POST /api/consensus` · `POST /api/safety-order` · `POST /api/crisis`
 · `POST /api/jobs/{report,allot,start,complete,review,extend}` · `PATCH /api/blocks` (drag-resize)
 · `POST /api/mode` (fog/VIP/DTP) · `POST /api/veto` · `GET /api/ingest?system=…`
+· `GET /api/trains?q=…` (citizen search) · `GET /api/trains/<number>` (citizen journey + maintenance impact)
 
 ## Performance & reliability notes
 

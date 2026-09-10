@@ -147,7 +147,7 @@ export function getModelCard(): ModelCard {
   const feats = m.features.map((name, i) => ({ name, weight: Math.round(m.w[i] * 100) / 100 }));
   feats.sort((a, b2) => Math.abs(b2.weight) - Math.abs(a.weight));
   return {
-    algorithm: "Logistic regression · batch GD · L2 0.002 · 500 epochs",
+    algorithm: "Logistic regression · batch GD · L2 0.002 · 700 epochs",
     trainedOn: m.trainedOn,
     accuracy: Math.round(m.accuracy * 1000) / 10,
     auc: Math.round(m.auc * 1000) / 1000,

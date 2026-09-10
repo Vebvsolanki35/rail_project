@@ -245,3 +245,78 @@ export interface OverrunInfo {
   donePct: number;
   probability: number;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Citizen Train View (public /trains page)                           */
+/* ------------------------------------------------------------------ */
+
+export interface CitizenSearchResultDTO {
+  number: string;
+  name: string;
+  kind: string;
+  origin: string;
+  originName: string;
+  dest: string;
+  destName: string;
+  departs: string;
+  runsPerDay: number;
+  stationsOnRoute: number;
+}
+
+export interface CitizenImpactReasonDTO {
+  kind: "active-work" | "field-job" | "planned-block" | "safety-watch";
+  section: string;
+  sectionCode: string;
+  corridor: string;
+  when: string;
+  windowLabel: string;
+  overlapsPassage: boolean;
+  departments: string[];
+  maxSeverity?: number;
+  isSuperBlock?: boolean;
+  text: string;
+}
+
+export interface CitizenJourneyDTO {
+  train: {
+    number: string;
+    name: string;
+    kind: string;
+    origin: string;
+    originName: string;
+    dest: string;
+    destName: string;
+    departs: string;
+    runsPerDay: number;
+    priority: number;
+  };
+  journey: {
+    status: "RUNNING" | "SCHEDULED" | "ARRIVED";
+    statusLabel: "Running Normally" | "Maintenance Window Nearby" | "Minor Operational Impact" | "High Operational Impact";
+    progressPct: number;
+    lastStation: { code: string; name: string; note: string } | null;
+    nextStation: { code: string; name: string; etaMin: number | null; note: string } | null;
+    stations: { code: string; name: string; seq: number; timeLabel: string; state: "passed" | "current" | "upcoming"; note: string }[];
+    beyondGrid: { destCode: string; destName: string } | null;
+  };
+  impact: {
+    level: "GREEN" | "YELLOW" | "RED";
+    statusLabel: CitizenJourneyDTO["journey"]["statusLabel"];
+    headline: string;
+    advice: string;
+    reasons: CitizenImpactReasonDTO[];
+    notes: string[];
+    whatWeDo: string;
+  };
+  kpis: {
+    horizon: string;
+    generatedAt: string;
+    blocksOptimized: number | null;
+    activitiesCoordinated: number | null;
+    combinedWindows: number | null;
+    downtimeReductionPct: number | null;
+    downtimeBaselineH: number | null;
+    downtimeOptimizedH: number | null;
+  } | null;
+  disclaimers: string[];
+}

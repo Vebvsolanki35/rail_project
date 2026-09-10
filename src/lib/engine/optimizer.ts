@@ -251,7 +251,8 @@ export async function runOptimizer(horizon: "WEEKLY" | "MONTHLY"): Promise<Optim
     for (const dep of b.departments) {
       const key = `${b.day}:${dep}`;
       const n = deptDayCount.get(key) ?? 0;
-      if (n >= 3) b.day = Math.min(b.day + 1, 27);
+      // keep the pushed day inside the horizon (weekly 0..6, monthly 0..27)
+      if (n >= 3) b.day = Math.min(b.day + 1, days - 1);
       deptDayCount.set(`${b.day}:${dep}`, (deptDayCount.get(`${b.day}:${dep}`) ?? 0) + 1);
     }
     b.startMin = bestStart;

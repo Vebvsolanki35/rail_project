@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CalendarCog, FlaskConical, HardHat, KeyRound, LayoutGrid, Radar, ShieldCheck, TrainFront, Wrench, ChevronRight, Activity } from "lucide-react";
+import { CalendarCog, FlaskConical, HardHat, KeyRound, LayoutGrid, Radar, ShieldCheck, TrainFront, Users, Wrench, ChevronRight, Activity } from "lucide-react";
 import { getRole, setRole, ROLE_META, DEPT_LABEL, type Role, type RoleInfo } from "@/lib/role";
 import { useLang } from "@/lib/lang";
 
@@ -152,6 +152,25 @@ export default function Sidebar() {
             <div className="min-w-0 flex-1">
               <span className="block text-xs leading-snug">{t("nav.overview")}</span>
               <span className="block truncate text-[10px] text-faint">{t("nav.overview.hint")}</span>
+            </div>
+          </Link>
+        </div>
+
+        {/* PUBLIC citizen portal — clearly separated from internal operations */}
+        <div className="pt-4">
+          <p className="px-2 pb-1.5 text-[10.5px] font-semibold tracking-wider text-faint uppercase">{t("nav.public")}</p>
+          <Link
+            href="/trains"
+            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
+              path === "/trains"
+                ? "bg-mint/10 text-mint font-semibold"
+                : "text-dim hover:bg-abyss hover:text-ink font-medium"
+            }`}
+          >
+            <Users size={17} className={path === "/trains" ? "text-mint" : "text-faint group-hover:text-dim"} />
+            <div className="min-w-0 flex-1">
+              <span className="block text-xs leading-snug">{t("nav.trains")}</span>
+              <span className="block truncate text-[10px] text-faint">{t("nav.trains.hint")}</span>
             </div>
           </Link>
         </div>
