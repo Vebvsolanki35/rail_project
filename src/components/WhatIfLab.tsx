@@ -19,8 +19,10 @@ export default function WhatIfLab({ stations, segments, fog }: { stations: Stati
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
-    setLoading(true);
     timer.current = setTimeout(async () => {
+      // Loading flag set inside the debounce callback, not synchronously in the
+      // effect body (react-hooks/set-state-in-effect).
+      setLoading(true);
       try {
         const res = await fetch("/api/whatif", {
           method: "POST",

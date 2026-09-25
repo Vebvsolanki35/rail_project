@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { KeyRound, OctagonAlert, ShieldCheck, TrainFront, X, Zap, Siren, User, FileWarning, Sun, Moon, Languages } from "lucide-react";
-import { getRole, ROLE_META, DEPT_LABEL, type RoleInfo } from "@/lib/role";
+import { KeyRound, LogOut, OctagonAlert, ShieldCheck, TrainFront, X, Zap, Siren, User, FileWarning, Sun, Moon, Languages } from "lucide-react";
+import { clearRole, ROLE_META, DEPT_LABEL, useRole } from "@/lib/role";
 import { useTheme } from "@/lib/theme";
 import { useLang } from "@/lib/lang";
+import { useNow } from "@/lib/useNow";
 
 const VETO_REASONS_KEYS = ["veto.r1", "veto.r2", "veto.r3", "veto.r4"] as const;
 const VETO_ICONS = [Zap, Siren, User, FileWarning];
@@ -16,27 +17,38 @@ export default function TopBar() {
   const { theme, toggle } = useTheme();
   const { lang, setLang, t } = useLang();
 
-  const titleKey = path === "/command" ? "page.command" : path === "/planner" ? "page.planner" : path === "/simulation" ? "page.simulation" : path === "/field" ? "page.field" : path === "/jobs" ? "page.jobs" : "page.default";
+  const titleKey =
+    path === "/command"
+      ? "page.command"
+      : path.startsWith("/planner")
+        ? "page.planner"
+        : path.startsWith("/defects")
+          ? "page.defects"
+          : path.startsWith("/superblocks")
+            ? "page.superblocks"
+            : path.startsWith("/compare")
+              ? "page.compare"
+              : path.startsWith("/replan")
+                ? "page.replan"
+              : path.startsWith("/station")
+                ? "page.station"
+                : path === "/simulation"
+                  ? "page.simulation"
+                  : path === "/field"
+                    ? "page.field"
+                    : path === "/jobs"
+                      ? "page.jobs"
+                      : "page.default";
   const subKey = titleKey + ".sub";
 
-  const [now, setNow] = useState<string>("");
-  const [role, setRoleState] = useState<RoleInfo | null>(null);
+  const nowMs = useNow(1000);
+  const now = nowMs ? new Date(nowMs).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }) : "";
+  const role = useRole();
   const [planStatus, setPlanStatus] = useState<string>("PROPOSED");
   const [vetoBusy, setVetoBusy] = useState(false);
   const [vetoOpen, setVetoOpen] = useState(false);
   const [vetoReason, setVetoReason] = useState<(typeof VETO_REASONS_KEYS)[number]>(VETO_REASONS_KEYS[0]);
   const [vetoNote, setVetoNote] = useState("");
-
-  useEffect(() => {
-    setRoleState(getRole());
-    const sync = () => setRoleState(getRole());
-    window.addEventListener("rr-role", sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener("rr-role", sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -51,15 +63,11 @@ export default function TopBar() {
   }, []);
 
   useEffect(() => {
-    fetchStatus();
+    // Deferred a tick: the fetch's setState lands in a callback rather than
+    // synchronously inside the effect body (see react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => void fetchStatus(), 0);
+    return () => clearTimeout(timer);
   }, [fetchStatus, path]);
-
-  useEffect(() => {
-    const f = () => setNow(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }));
-    f();
-    const t = setInterval(f, 1000);
-    return () => clearInterval(t);
-  }, []);
 
   async function submitVeto(resume = false) {
     if (role?.role !== "DRM") return;
@@ -157,6 +165,19 @@ export default function TopBar() {
             >
               <KeyRound size={13} /> {t("btn.signin")}
             </Link>
+          )}
+
+          {role && (
+            <button
+              onClick={() => {
+                clearRole();
+                window.location.href = "/login";
+              }}
+              className="flex items-center gap-1.5 rounded-lg border border-edge bg-panel px-2.5 py-1.5 text-xs font-medium text-dim transition hover:text-ink"
+              title={`Signed in as ${ROLE_META[role.role].label} — sign out`}
+            >
+              <LogOut size={13} /> {t("btn.signout")}
+            </button>
           )}
 
           <div className="hidden items-center gap-1.5 rounded-md border border-edge bg-panel px-2.5 py-1 text-xs text-dim md:flex">

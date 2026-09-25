@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { BadgeCheck, BrainCircuit, ChevronRight, Clock3, Cpu, FileCheck2, Layers, Loader2, Play, Sparkles, X, ShieldAlert } from "lucide-react";
 import GanttChart from "@/components/GanttChart";
 import { DEPT_COLORS, fmtMin } from "@/lib/engine/network";
-import { getRole } from "@/lib/role";
+import { useRole } from "@/lib/role";
 import type { DashboardState, DefectDTO, OptimizeResponse, PlanDTO, SafetyOrderDTO } from "@/lib/engine/types";
 
 /* ---------------- Safety Work Order Panel ---------------- */
@@ -14,8 +14,6 @@ function SafetyOrderPanel({ blockId, onClose }: { blockId: number; onClose: () =
   const [busy, setBusy] = useState(true);
 
   useEffect(() => {
-    setBusy(true);
-    setOrder(null);
     fetch("/api/safety-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -97,16 +95,20 @@ export default function PlannerClient({ initial }: { initial: DashboardState }) 
   const [week, setWeek] = useState(0);
   const [running, setRunning] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const role = useRole();
+  const isDrm = role?.role === "DRM";
   const [mc, setMc] = useState<OptimizeResponse["monteCarlo"] | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
   const [defects, setDefects] = useState<DefectDTO[]>([]);
-  const [isDrm, setIsDrm] = useState(false);
+
   const [approveBusy, setApproveBusy] = useState(false);
   const [resizeInfo, setResizeInfo] = useState<{ delayCostMin: number; affected: number; startMin: number; endMin: number } | null>(null);
 
   useEffect(() => {
-    setIsDrm(getRole()?.role === "DRM");
-    fetch("/api/defects").then((r) => r.json()).then((d) => setDefects(d.defects ?? []));
+    fetch("/api/defects")
+      .then((r) => r.json())
+      .then((d) => setDefects(d.defects ?? []))
+      .catch(() => setDefects([]));
   }, []);
 
   const refreshState = useCallback(async () => {

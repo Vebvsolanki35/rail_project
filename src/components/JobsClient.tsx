@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNow } from "@/lib/useNow";
 import { BadgeCheck, Boxes, Camera, ChevronDown, Clock3, FileCheck2, Loader2, MapPin, Pause, Play, Printer, Satellite, ShieldCheck, Timer, WifiOff, Wrench, X, AlertCircle } from "lucide-react";
 import RailMap from "@/components/RailMap";
 import SmartImg from "@/components/SmartImg";
@@ -42,20 +43,23 @@ export default function JobsClient({ initialState, initialJobs }: { initialState
   const [permitJob, setPermitJob] = useState<JobDTO | null>(null);
   const [offline, setOffline] = useState(false);
   const [queue, setQueue] = useState<QueuedShot[]>([]);
-  const [clock, setClock] = useState(Date.now());
+  const clock = useNow(15000);
   const fileRef = useRef<HTMLInputElement>(null);
   const pendingAction = useRef<{ jobId: number; kind: "start" | "complete" } | null>(null);
 
   useEffect(() => {
-    const r = getRole();
-    if (r?.role === "KARMI" && r.dept) setDept(r.dept);
-    try {
-      setQueue(JSON.parse(window.localStorage.getItem(QUEUE_KEY) ?? "[]"));
-    } catch {
-      /* empty queue */
-    }
-    const t = setInterval(() => setClock(Date.now()), 15000);
-    return () => clearInterval(t);
+    // Device-local reads (roster dept, offline queue) land one tick after mount
+    // so no state is written synchronously inside the effect body.
+    const timer = setTimeout(() => {
+      const r = getRole();
+      if (r?.role === "KARMI" && r.dept) setDept(r.dept);
+      try {
+        setQueue(JSON.parse(window.localStorage.getItem(QUEUE_KEY) ?? "[]"));
+      } catch {
+        /* empty queue */
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const lastSig = useRef("");
@@ -73,9 +77,9 @@ export default function JobsClient({ initialState, initialJobs }: { initialState
     return () => clearInterval(t);
   }, [refresh]);
 
-  async function post(url: string, body: Record<string, unknown>, jobId: number) {
+  async function post(url: string, body: Record<string, unknown>, jobId: number, at: number) {
     if (offline) {
-      const q = [...queue, { url, body, jobId, at: Date.now() }];
+      const q = [...queue, { url, body, jobId, at }];
       setQueue(q);
       window.localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
       return;
@@ -178,7 +182,7 @@ export default function JobsClient({ initialState, initialJobs }: { initialState
                   {j.status === "ALLOTTED" && (
                     <button
                       onClick={() => {
-                        post("/api/jobs/start", { jobId: j.id, gps: "28.64290°N, 77.21970°E" }, j.id);
+                        post("/api/jobs/start", { jobId: j.id, gps: "28.64290°N, 77.21970°E" }, j.id, Date.now());
                       }}
                       disabled={busy === j.id}
                       className="flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 shadow transition hover:bg-amber-400 disabled:opacity-50"
@@ -191,7 +195,7 @@ export default function JobsClient({ initialState, initialJobs }: { initialState
                   {j.status === "IN_PROGRESS" && (
                     <button
                       onClick={() => {
-                        post("/api/jobs/complete", { jobId: j.id, gps: "28.64290°N, 77.21970°E" }, j.id);
+                        post("/api/jobs/complete", { jobId: j.id, gps: "28.64290°N, 77.21970°E" }, j.id, Date.now());
                       }}
                       disabled={busy === j.id}
                       className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-slate-950 shadow transition hover:bg-emerald-400 disabled:opacity-50"
@@ -241,8 +245,7 @@ export default function JobsClient({ initialState, initialJobs }: { initialState
                     <div className="rounded-xl border border-edge bg-hull/50 p-2 text-xs">
                       <p className="font-semibold text-amber-400 mb-1">Before Repair Photo (GPS Stamped)</p>
                       <div className="aspect-[16/9] overflow-hidden rounded-lg bg-black/40">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <SmartImg src={j.beforePhoto} alt="Before repair" className="h-full w-full object-cover" />
+                                                <SmartImg src={j.beforePhoto} alt="Before repair" className="h-full w-full object-cover" />
                       </div>
                     </div>
                   )}
@@ -250,8 +253,7 @@ export default function JobsClient({ initialState, initialJobs }: { initialState
                     <div className="rounded-xl border border-edge bg-hull/50 p-2 text-xs">
                       <p className="font-semibold text-emerald-400 mb-1">After Repair Photo (GPS Stamped)</p>
                       <div className="aspect-[16/9] overflow-hidden rounded-lg bg-black/40">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <SmartImg src={j.afterPhoto} alt="After repair" className="h-full w-full object-cover" />
+                                                <SmartImg src={j.afterPhoto} alt="After repair" className="h-full w-full object-cover" />
                       </div>
                     </div>
                   )}

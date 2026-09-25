@@ -69,6 +69,33 @@ export const defects = pgTable("defects", {
   failureProb72h: real("failure_prob_72h").notNull().default(0.1),
   status: text("status").notNull().default("open"), // open | scheduled | closed
   detectedAt: timestamp("detected_at").notNull().defaultNow(),
+  /* ---- Smart Defect Lifecycle (PS #26027) ---- */
+  defectCode: text("defect_code").notNull().default(""), // DEF-<SECTION>-<YEAR>-<SEQ> — stable human reference
+  lifecycleStatus: text("lifecycle_status").notNull().default("REPORTED"), // REPORTED … CLOSED (see engine/lifecycleStages.ts)
+  priority: text("priority").notNull().default("MEDIUM"), // CRITICAL | HIGH | MEDIUM | LOW
+  detailedInspection: boolean("detailed_inspection").notNull().default(false),
+  dueInDays: integer("due_in_days").notNull().default(7), // negative = overdue; drives the urgency engine
+  recurrenceBand: text("recurrence_band").notNull().default("NONE"), // rule-based, NOT ML: NONE | LOW | MEDIUM | HIGH
+  occurrences: integer("occurrences").notNull().default(1), // similar defects on this asset inside the window
+  longTermMaintenance: jsonb("long_term_maintenance").$type<{ durationMin: number; note: string; plannedFor: string } | null>(),
+  closedAt: timestamp("closed_at"),
+});
+
+/**
+ * Immutable audit trail of every lifecycle transition — who moved the defect,
+ * from which stage to which, and why. Append-only by convention.
+ */
+export const defectEvents = pgTable("defect_events", {
+  id: serial("id").primaryKey(),
+  defectId: integer("defect_id")
+    .notNull()
+    .references(() => defects.id),
+  fromStage: text("from_stage").notNull(),
+  toStage: text("to_stage").notNull(),
+  actor: text("actor").notNull().default("system"),
+  actorRole: text("actor_role").notNull().default("SYSTEM"),
+  note: text("note").notNull().default(""),
+  at: timestamp("at").notNull().defaultNow(),
 });
 
 /** AI-generated block plans (4H rolling / weekly / monthly / crisis). */
@@ -79,6 +106,16 @@ export const plans = pgTable("plans", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   resilienceScore: real("resilience_score").notNull().default(0),
   kpis: jsonb("kpis").$type<Record<string, number>>().notNull(),
+  /* ---- Dynamic Re-Planning lineage ---- */
+  supersedesId: integer("supersedes_id"), // previous version this plan replaces
+  triggerNote: text("trigger_note"), // why the re-plan fired (event + detail)
+  diff: jsonb("diff").$type<{
+    added: string[];
+    removed: string[];
+    moved: string[];
+    frozen: string[];
+    note: string;
+  } | null>(),
 });
 
 /** Scheduled maintenance blocks inside a plan. */
@@ -99,7 +136,8 @@ export const blockItems = pgTable("block_items", {
   mode: text("mode").notNull().default("physical"), // physical | virtual
   window: text("window").notNull().default("GOLDEN"), // GOLDEN | SHOULDER | OFFPEAK
   delayCostMin: real("delay_cost_min").notNull().default(0),
-  status: text("status").notNull().default("proposed"),
+  status: text("status").notNull().default("proposed"), // proposed | frozen (in execution) | superseded
+  rationale: text("rationale").notNull().default(""), // why the optimizer chose this window (BlockExplain)
 });
 
 /** Event / alert feed for the command center. */

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowDownRight, Boxes, Gauge, ShieldCheck, Timer, Zap } from "lucide-react";
+import { AlarmClock, ArrowDownRight, Boxes, ClipboardCheck, Clock, Gauge, ShieldCheck, Timer, Zap } from "lucide-react";
 import type { DashboardState } from "@/lib/engine/types";
 
 function Card({
@@ -104,6 +104,36 @@ export default function KpiStrip({ state }: { state: DashboardState }) {
         sub={`${state.counts.criticalDefects} critical · ${state.counts.assetsBelowHealth} degraded`}
         icon={<Zap size={14} />}
         tone={state.counts.criticalDefects > 4 ? "#f43f5e" : "#f59e0b"}
+      />
+      {/* PS #26027 headline objective: availability maximised, downtime minimised */}
+      <Card
+        label="Asset Availability"
+        value={state.availability ? `${state.availability.optimizedPct.toFixed(1)}%` : "—"}
+        sub={
+          state.availability
+            ? `vs ${state.availability.baselinePct.toFixed(1)}% manual (+${state.availability.gainPts} pts)`
+            : "Run optimizer to calculate"
+        }
+        icon={<Clock size={14} />}
+        tone="#22c55e"
+      />
+      <Card
+        label="Urgency Load"
+        value={`${state.urgency.emergency > 0 ? `${state.urgency.emergency}🔥` : state.urgency.overdue}`}
+        sub={
+          state.urgency.emergency > 0
+            ? `${state.urgency.emergency} emergency · ${state.urgency.overdue} overdue`
+            : `${state.urgency.overdue} overdue · avg index ${state.urgency.avgUrgency}`
+        }
+        icon={<AlarmClock size={14} />}
+        tone={state.urgency.emergency > 0 ? "#ef4444" : "#f59e0b"}
+      />
+      <Card
+        label="Lifecycle Open"
+        value={`${state.lifecycle.open}`}
+        sub={`${state.lifecycle.awaitingValidation} awaiting validation · ${state.lifecycle.chronic} chronic`}
+        icon={<ClipboardCheck size={14} />}
+        tone="#38bdf8"
       />
     </div>
   );

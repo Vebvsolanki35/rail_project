@@ -1,6 +1,8 @@
 import { db } from "@/db";
 import { stations, segments, assets, defects, events, jobs, settings } from "@/db/schema";
 import { FIELD_PHOTOS, STATIONS, SEGMENTS, mulberry32, project } from "./network";
+import { formatDefectCode } from "./defectlifecycle";
+import { defaultDueDays } from "./fieldreport";
 
 const ENG_TYPES = [
   "Rail head – USFD zone",
@@ -137,25 +139,67 @@ async function doSeed() {
 
   // ---- defects ----
   const defectValues: (typeof defects.$inferInsert)[] = [];
+  /* ---- Smart Defect Lifecycle: stable DEF-<SECTION>-<YEAR>-<SEQ> ids and a
+     realistic spread of stages, deadlines, priorities and recurrence history so
+     the lifecycle board, urgency queue and recurrence detector have real data. */
+  const seedYear = new Date().getFullYear();
+  const seqBySection = new Map<string, number>();
+  const codeByAssetId = new Map(assetRows.map((a) => [a.id, segRows.find((s) => s.id === a.segmentId)?.code ?? "UNK"]));
+  function lifecycleFor(assetId: number, severity: number, overdueDays: number) {
+    const sectionCode = codeByAssetId.get(assetId) ?? "UNK";
+    const seq = (seqBySection.get(sectionCode) ?? 0) + 1;
+    seqBySection.set(sectionCode, seq);
+    const stagePick = rng();
+    const stage =
+      stagePick < 0.3
+        ? "REPORTED"
+        : stagePick < 0.45
+          ? "UNDER_REVIEW"
+          : stagePick < 0.55
+            ? "VERIFIED"
+            : stagePick < 0.7
+              ? "AI_PRIORITIZED"
+              : stagePick < 0.8
+                ? "MAINTENANCE_REQUIRED"
+                : stagePick < 0.88
+                  ? "PLANNING"
+                  : stagePick < 0.96
+                    ? "BLOCK_PLANNED"
+                    : "WORK_ASSIGNED";
+    const occurrencePick = rng();
+    const occurrences = occurrencePick > 0.86 ? 4 : occurrencePick > 0.7 ? 3 : occurrencePick > 0.5 ? 2 : 1;
+    return {
+      defectCode: formatDefectCode(sectionCode, seedYear, seq),
+      lifecycleStatus: stage,
+      dueInDays: defaultDueDays(severity) - overdueDays,
+      priority: severity >= 9 ? "CRITICAL" : severity >= 7 ? "HIGH" : severity >= 5 ? "MEDIUM" : "LOW",
+      occurrences,
+      recurrenceBand: occurrences >= 4 ? "HIGH" : occurrences === 3 ? "MEDIUM" : occurrences === 2 ? "LOW" : "NONE",
+      detailedInspection: stagePick > 0.6 && stagePick < 0.75,
+    };
+  }
+
   for (const a of assetRows) {
     const nDef = rng() > 0.55 ? 1 + Math.floor(rng() * 2) : rng() > 0.3 ? 1 : 0;
     for (let i = 0; i < nDef; i++) {
       const pool = a.department === "ENG" ? ENG_DEFECTS : a.department === "TRD" ? TRD_DEFECTS : SNT_DEFECTS;
       const remoteOk = a.department !== "ENG" || rng() > 0.7;
       const severity = Math.min(10, Math.max(1, Math.round(2 + rng() * 8)));
+      const overdueDays = Math.floor(rng() * 38);
       defectValues.push({
         assetId: a.id,
         department: a.department,
         sourceSystem: a.sourceSystem,
         title: pool[Math.floor(rng() * pool.length)],
         severity,
-        overdueDays: Math.floor(rng() * 38),
+        overdueDays,
         durationMin: 25 + Math.floor(rng() * 95),
         needsLineBlock: rng() > 0.15,
         needsPowerBlock: a.department === "TRD" ? rng() > 0.35 : rng() > 0.8,
         inspectionMode: remoteOk ? "either" : "physical",
         failureProb72h: Math.round((severity / 12 + rng() * 0.3) * 100) / 100,
         status: "open",
+        ...lifecycleFor(a.id, severity, overdueDays),
       });
     }
   }
@@ -174,18 +218,27 @@ async function doSeed() {
         title: `Rail crack indication — USFD OBS @ km 4.2 (Yamuna Bridge ${segCode === "NZM-ANVT" ? "#2" : "#1"})`,
         severity: 10, overdueDays: 2, durationMin: 55, needsLineBlock: true, needsPowerBlock: false,
         inspectionMode: "physical", failureProb72h: 0.96, status: "open",
+        defectCode: formatDefectCode(segCode, seedYear, (seqBySection.get(segCode) ?? 0) + 1),
+        lifecycleStatus: "UNDER_REVIEW", priority: "CRITICAL", dueInDays: -1,
+        occurrences: 4, recurrenceBand: "HIGH", detailedInspection: true,
       },
       {
         assetId: (engBridge[1] ?? anchor).id, department: "ENG", sourceSystem: "TMS",
         title: "Girder bearing seize-up — cold-weld watch",
         severity: 8, overdueDays: 11, durationMin: 75, needsLineBlock: true, needsPowerBlock: false,
         inspectionMode: "physical", failureProb72h: 0.7, status: "open",
+        defectCode: formatDefectCode(segCode, seedYear, (seqBySection.get(segCode) ?? 0) + 2),
+        lifecycleStatus: "AI_PRIORITIZED", priority: "CRITICAL", dueInDays: -7,
+        occurrences: 3, recurrenceBand: "MEDIUM", detailedInspection: false,
       },
       {
         assetId: anchor.id, department: "SNT", sourceSystem: "RDPMS",
         title: "Track circuit flicker on bridge approach",
         severity: 8, overdueDays: 6, durationMin: 40, needsLineBlock: false, needsPowerBlock: false,
         inspectionMode: "either", failureProb72h: 0.62, status: "open",
+        defectCode: formatDefectCode(segCode, seedYear, (seqBySection.get(segCode) ?? 0) + 3),
+        lifecycleStatus: "MAINTENANCE_REQUIRED", priority: "HIGH", dueInDays: 2,
+        occurrences: 2, recurrenceBand: "LOW", detailedInspection: true,
       }
     );
   }

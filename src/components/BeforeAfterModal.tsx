@@ -80,7 +80,6 @@ export default function BeforeAfterModal({
             <div key={p.label} className="overflow-hidden rounded-xl border border-edge bg-panel shadow-sm">
               <div className="relative aspect-[4/3] w-full bg-black/40">
                 {p.img ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <SmartImg src={p.img} alt={p.label} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-faint">NO PHOTO CAPTURED</div>

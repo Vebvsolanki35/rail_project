@@ -2,7 +2,12 @@ import { db } from "@/db";
 import { defects, events, jobs, segments } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { FIELD_PHOTOS, SEGMENTS } from "./network";
+import { onJobAllotted, onJobCompleted, onJobStarted, onJobValidated } from "./defectlifecycle";
 import type { JobDTO, JobStatus } from "./types";
+
+/* Field actors used for the Smart Defect Lifecycle audit trail. */
+const INSPECTOR_ACTOR = { name: "Insp. S. Sharma (SSE/P.Way, NDLS-I)", role: "INSPECTOR" };
+const karmiActor = (teamLeader: string | null) => ({ name: teamLeader ?? "Karmi crew", role: "KARMI" });
 
 function escalationLevel(j: typeof jobs.$inferSelect): number {
   if (j.status !== "ALLOTTED") return 0;
@@ -108,6 +113,8 @@ export async function allotJob(input: { jobId: number; teamLeader: string; windo
     })
     .where(eq(jobs.id, input.jobId));
   await event("info", `Inspector allotted job #${input.jobId} (${seg?.code}) to ${input.teamLeader} — golden window ${String(Math.floor(input.windowStart / 60)).padStart(2, "0")}:${String(input.windowStart % 60).padStart(2, "0")}`);
+  // Smart Defect Lifecycle: the linked defect advances to WORK ASSIGNED.
+  await onJobAllotted(input.jobId, INSPECTOR_ACTOR, `work allotted to ${input.teamLeader}`);
 }
 
 /** Step 2 — karmi starts work, BEFORE photo + GPS. */
@@ -127,6 +134,8 @@ export async function startJob(input: { jobId: number; photoData?: string }) {
     })
     .where(eq(jobs.id, input.jobId));
   await event("critical", `BLOCK OCCUPIED: ${seg?.code} — ${job.teamLeader?.split(" — ")[0] ?? "crew"} on site, BEFORE photo GPS-verified. Section RED on corridor board.`);
+  // Smart Defect Lifecycle: crew on site → WORK IN PROGRESS.
+  await onJobStarted(input.jobId, karmiActor(job.teamLeader), "crew on site, BEFORE photo GPS-verified");
 }
 
 /** Step 3 — karmi completes work, AFTER photo + GPS. */
@@ -146,6 +155,8 @@ export async function completeJob(input: { jobId: number; photoData?: string }) 
     })
     .where(eq(jobs.id, input.jobId));
   await event("info", `Job #${input.jobId} (${seg?.code}) submitted for review — BEFORE/AFTER photo set with GPS metadata`);
+  // Smart Defect Lifecycle: work done, inspector validation pending.
+  await onJobCompleted(input.jobId, karmiActor(job.teamLeader), "work completed, submitted for validation");
 }
 
 /** Step 4 — inspector reviews: accept → block released; reject → back to ALLOTTED. */
@@ -154,6 +165,8 @@ export async function reviewJob(input: { jobId: number; accept: boolean; reason?
   if (!job) throw new Error("job not found");
   const [seg] = await db.select().from(segments).where(eq(segments.id, job.segmentId));
   if (input.accept) {
+    // Smart Defect Lifecycle: inspector validation closes the defect.
+    await onJobValidated(input.jobId, true, INSPECTOR_ACTOR, input.reason ?? "work validated on site");
     await db.update(jobs).set({ status: "COMPLETED", reviewNote: input.reason ?? "Accepted — work verified.", updatedAt: new Date() }).where(eq(jobs.id, input.jobId));
     // close matching defect if linked
     if (job.defectId) {
@@ -168,6 +181,8 @@ export async function reviewJob(input: { jobId: number; accept: boolean; reason?
         : `BLOCK RELEASED: ${seg?.code} turned GREEN on corridor board — Inspector sign-off #RR/SO/${job.id}, trains resume with 12952 first through`
     );
   } else {
+    // Clearly-labelled correction edge: AWAITING VALIDATION → WORK ASSIGNED (rework).
+    await onJobValidated(input.jobId, false, INSPECTOR_ACTOR, input.reason ?? "quality not satisfactory — rework required");
     await db.update(jobs).set({ status: "ALLOTTED", reviewNote: input.reason ?? "Rejected", afterPhoto: null, afterAt: null, updatedAt: new Date() }).where(eq(jobs.id, input.jobId));
     await event("warn", `Inspector REJECTED job #${job.id} (${seg?.code}): ${input.reason ?? "quality not satisfactory"} — re-allotted to ${job.teamLeader}`);
   }

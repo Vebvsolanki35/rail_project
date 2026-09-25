@@ -2,15 +2,20 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { CalendarCog, FlaskConical, HardHat, KeyRound, LayoutGrid, Radar, ShieldCheck, TrainFront, Users, Wrench, ChevronRight, Activity } from "lucide-react";
-import { getRole, setRole, ROLE_META, DEPT_LABEL, type Role, type RoleInfo } from "@/lib/role";
+import { useState } from "react";
+import { Activity, Boxes, Building2, CalendarCog, FlaskConical, GitBranch, HardHat, KeyRound, LayoutGrid, LogOut, Radar, Scale, ShieldCheck, TrainFront, Users, Wrench, ChevronRight, ClipboardList } from "lucide-react";
+import { clearRole, ROLE_META, DEPT_LABEL, useRole } from "@/lib/role";
 import { useLang } from "@/lib/lang";
 
 const NAV = [
   { href: "/command", labelKey: "nav.command", icon: Radar, hintKey: "nav.command.hint", roles: ["DRM", "CONTROL"] },
   { href: "/planner", labelKey: "nav.planner", icon: CalendarCog, hintKey: "nav.planner.hint", roles: ["DRM", "CONTROL"] },
+  { href: "/defects", labelKey: "nav.defects", icon: ClipboardList, hintKey: "nav.defects.hint", roles: ["DRM", "CONTROL", "INSPECTOR"] },
+  { href: "/superblocks", labelKey: "nav.superblocks", icon: Boxes, hintKey: "nav.superblocks.hint", roles: ["DRM", "CONTROL", "INSPECTOR"] },
+  { href: "/compare", labelKey: "nav.compare", icon: Scale, hintKey: "nav.compare.hint", roles: ["DRM", "CONTROL", "INSPECTOR"] },
+  { href: "/replan", labelKey: "nav.replan", icon: GitBranch, hintKey: "nav.replan.hint", roles: ["DRM", "CONTROL"] },
   { href: "/simulation", labelKey: "nav.simulation", icon: FlaskConical, hintKey: "nav.simulation.hint", roles: ["DRM", "CONTROL"] },
+  { href: "/station", labelKey: "nav.station", icon: Building2, hintKey: "nav.station.hint", roles: ["CONTROL", "DRM"] },
   { href: "/field", labelKey: "nav.field", icon: HardHat, hintKey: "nav.field.hint", roles: ["INSPECTOR", "DRM"] },
   { href: "/jobs", labelKey: "nav.jobs", icon: Wrench, hintKey: "nav.jobs.hint", roles: ["KARMI"] },
 ];
@@ -28,25 +33,17 @@ export default function Sidebar() {
   const path = usePathname();
   const router = useRouter();
   const { t } = useLang();
-  const [role, setRoleState] = useState<RoleInfo | null>(null);
+  // Session lives in an external store (localStorage) — read it reactively
+  // instead of mirroring it into component state from an effect.
+  const role = useRole();
   const [switching, setSwitching] = useState(false);
 
-  function quickSwitch(r: Role) {
-    setRole({ role: r, dept: r === "KARMI" ? (role?.dept ?? "ENG") : undefined });
+  /** End the session (see src/lib/auth.ts) and return to the sign-in screen. */
+  function signOut() {
+    clearRole();
     setSwitching(false);
-    router.push(ROLE_META[r].dest);
+    router.push("/login");
   }
-
-  useEffect(() => {
-    setRoleState(getRole());
-    const sync = () => setRoleState(getRole());
-    window.addEventListener("rr-role", sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener("rr-role", sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
 
   const visibleNav = role ? NAV.filter((n) => n.roles.includes(role.role)) : NAV.slice(0, 3);
   const meta = role ? ROLE_META[role.role] : null;
@@ -89,16 +86,23 @@ export default function Sidebar() {
               <ChevronRight size={13} className={switching ? "rotate-90" : ""} />
             </button>
             {switching && (
-              <div className="anim-rise mt-2 grid grid-cols-2 gap-1.5 border-t border-edge pt-2">
-                {(["DRM", "CONTROL", "INSPECTOR", "KARMI"] as Role[]).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => quickSwitch(r)}
-                    className="rounded-md border border-edge bg-hull px-2 py-1.5 text-left text-[10.5px] font-medium text-dim hover:border-primary/40 hover:text-ink transition"
-                  >
-                    {r === "CONTROL" ? "COA Room" : t(`role.${r.toLowerCase()}`).split(" ")[0]}
-                  </button>
-                ))}
+              <div className="anim-rise mt-2 space-y-1.5 border-t border-edge pt-2">
+                <p className="text-[10px] leading-relaxed text-faint">
+                  Your desk is decided by the account you signed in with. To work at another desk, sign in with that
+                  account instead.
+                </p>
+                <Link
+                  href="/login"
+                  className="block rounded-md border border-edge bg-hull px-2 py-1.5 text-center text-[10.5px] font-medium text-dim transition hover:border-primary/40 hover:text-ink"
+                >
+                  {t("role.switch")} — sign in as someone else
+                </Link>
+                <button
+                  onClick={signOut}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-md border border-red-500/30 bg-red-500/5 px-2 py-1.5 text-[10.5px] font-semibold text-red-400 transition hover:bg-red-500/10"
+                >
+                  <LogOut size={11} /> {t("btn.signout")}
+                </button>
               </div>
             )}
           </div>

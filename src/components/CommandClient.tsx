@@ -4,13 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Activity, CloudFog, Eye, Radio, ShieldAlert, Thermometer, Timer, TrafficCone, TrainFront, Webhook, Wind, X } from "lucide-react";
 import RailMap from "@/components/RailMap";
 import KpiStrip from "@/components/KpiStrip";
+import UrgencySummary from "@/components/UrgencySummary";
+import UrgencyQueue from "@/components/UrgencyQueue";
 import LiveFeed from "@/components/LiveFeed";
 import LiveBoard from "@/components/LiveBoard";
 import ConsensusMeter from "@/components/ConsensusMeter";
 import SectionInspector from "@/components/SectionInspector";
 import DrmRow from "@/components/DrmRow";
 import { CORRIDOR_COLORS, DEPT_COLORS, fmtMin } from "@/lib/engine/network";
-import { getRole, type RoleInfo } from "@/lib/role";
+import { useRole } from "@/lib/role";
 import type { DashboardState, SettingsDTO } from "@/lib/engine/types";
 
 function Toggle({
@@ -70,19 +72,12 @@ function Toggle({
 }
 
 export default function CommandClient({ initial }: { initial: DashboardState }) {
+  const role = useRole();
   const [state, setState] = useState(initial);
   const [pending, setPending] = useState<string | null>(null);
   const [selectedCode, setSelectedCode] = useState<string | null>("NZM-ANVT");
-  const [role, setRole] = useState<RoleInfo | null>(null);
   const [extendBusy, setExtendBusy] = useState(false);
   const [webhookOpen, setWebhookOpen] = useState(false);
-
-  useEffect(() => {
-    setRole(getRole());
-    const sync = () => setRole(getRole());
-    window.addEventListener("rr-role", sync);
-    return () => window.removeEventListener("rr-role", sync);
-  }, []);
 
   const sigOf = (d: DashboardState) =>
     `${d.settings.fogMode}${d.settings.vipAlert}${d.settings.dtpRedZone}${d.settings.planStatus}|${d.counts.openDefects}|${d.events.length}|${d.liveTrains.length}|${d.activeBlockSegments.join(",")}|${d.latestPlan?.id ?? 0}|${d.overrun?.jobId ?? 0}|${d.overrun?.remainingMin ?? 0}`;
@@ -182,6 +177,12 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
       {role?.role === "DRM" && <DrmRow state={state} />}
 
       <KpiStrip state={state} />
+
+      {/* Urgency engine + lifecycle roll-up (PS #26027) */}
+      <div className="grid gap-4 xl:grid-cols-[360px_1fr]">
+        <UrgencySummary summary={state.urgency} />
+        <UrgencyQueue items={state.urgencyQueue} limit={8} />
+      </div>
 
       {/* Main Grid View */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
