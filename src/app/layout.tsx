@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       data-theme="light"
       style={{ "--font-sans": sansFamily, "--font-mono": monoFamily } as React.CSSProperties}
     >
-      <body className="antialiased selection:bg-blue-500/20 selection:text-blue-900 dark:selection:bg-blue-400/25 dark:selection:text-blue-200">
+      <body className="antialiased selection:bg-cyan/20 selection:text-cyan dark:selection:bg-cyan/25 dark:selection:text-cyan">
         <ThemeProvider>
           <LangProvider>
             {children}

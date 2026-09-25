@@ -1,200 +1,174 @@
 "use client";
 
+/**
+ * RAIL RAKSHAK — PRIMARY NAVIGATION (desktop)
+ *
+ * Grouped railway-department navigation driven by `src/lib/navigation.ts`.
+ * The visible items are filtered by the signed-in role, and that filter is a
+ * strict subset of the `ROLE_ROUTES` allow-list in `src/lib/auth.ts` — so the
+ * navigation can never offer a desk that RoleGate would refuse.
+ *
+ * Tablet and phone widths get the same model through components/MobileNav.tsx.
+ */
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { CalendarCog, FlaskConical, HardHat, KeyRound, LayoutGrid, Radar, ShieldCheck, TrainFront, Users, Wrench, ChevronRight, Activity } from "lucide-react";
-import { getRole, setRole, ROLE_META, DEPT_LABEL, type Role, type RoleInfo } from "@/lib/role";
+import { useState } from "react";
+import { Activity, ChevronRight, KeyRound, LayoutGrid, LogOut, TrainFront } from "lucide-react";
+import { clearRole, DEPT_LABEL, ROLE_META, useRole } from "@/lib/role";
+import { useSession } from "@/lib/useSession";
+import { ROLE_LABEL } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
+import { navForRole } from "@/lib/navigation";
+import StatusPill from "./StatusPill";
 
-const NAV = [
-  { href: "/command", labelKey: "nav.command", icon: Radar, hintKey: "nav.command.hint", roles: ["DRM", "CONTROL"] },
-  { href: "/planner", labelKey: "nav.planner", icon: CalendarCog, hintKey: "nav.planner.hint", roles: ["DRM", "CONTROL"] },
-  { href: "/simulation", labelKey: "nav.simulation", icon: FlaskConical, hintKey: "nav.simulation.hint", roles: ["DRM", "CONTROL"] },
-  { href: "/field", labelKey: "nav.field", icon: HardHat, hintKey: "nav.field.hint", roles: ["INSPECTOR", "DRM"] },
-  { href: "/jobs", labelKey: "nav.jobs", icon: Wrench, hintKey: "nav.jobs.hint", roles: ["KARMI"] },
-];
-
+/** Documented external exchange contracts (see src/lib/integrations/contracts.ts). */
 const UPLINKS = [
-  { name: "TMS", label: "Track" },
-  { name: "TDMS", label: "Traction" },
-  { name: "SMMS", label: "Signals" },
-  { name: "COA", label: "Control" },
-  { name: "FOIS", label: "Freight" },
-  { name: "IMD", label: "Weather" },
+  { name: "TMS", label: "Track Management System — defect & USFD feed" },
+  { name: "TDMS", label: "Traction Distribution — OHE & SCADA alerts" },
+  { name: "SMMS", label: "Signal & Telecom — RDPMS diagnostics" },
+  { name: "COA", label: "Control Office — corridors & live graph" },
+  { name: "FOIS", label: "Freight Operations — rakes & DFC forecast" },
+  { name: "IMD", label: "India Meteorological Department — fog nowcast" },
 ];
 
 export default function Sidebar() {
   const path = usePathname();
   const router = useRouter();
   const { t } = useLang();
-  const [role, setRoleState] = useState<RoleInfo | null>(null);
+  const role = useRole();
+  const session = useSession();
   const [switching, setSwitching] = useState(false);
 
-  function quickSwitch(r: Role) {
-    setRole({ role: r, dept: r === "KARMI" ? (role?.dept ?? "ENG") : undefined });
+  function signOut() {
+    clearRole();
     setSwitching(false);
-    router.push(ROLE_META[r].dest);
+    router.push("/login");
   }
 
-  useEffect(() => {
-    setRoleState(getRole());
-    const sync = () => setRoleState(getRole());
-    window.addEventListener("rr-role", sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener("rr-role", sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
-
-  const visibleNav = role ? NAV.filter((n) => n.roles.includes(role.role)) : NAV.slice(0, 3);
+  const groups = navForRole(session?.role ?? null);
   const meta = role ? ROLE_META[role.role] : null;
+  const roleName = session ? ROLE_LABEL[session.role] : meta?.label ?? "";
+  const deptName = session?.department ? DEPT_LABEL[session.department].split(" — ")[0] : role?.dept ? DEPT_LABEL[role.dept].split(" — ")[0] : null;
+  const signInNeeded = !session;
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-edge bg-hull lg:flex">
-      {/* Brand Header */}
-      <Link href="/" className="flex items-center gap-3 border-b border-edge px-5 py-4 transition hover:bg-abyss/50">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
-          <TrainFront size={20} strokeWidth={2.2} />
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-edge bg-hull lg:flex" aria-label="Module navigation">
+      {/* Brand */}
+      <Link href="/" className="dept-bar m-3 mb-2 flex items-center gap-2.5 border border-edge bg-panel px-3 py-2.5 hover:border-primary/50">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] bg-primary on-accent">
+          <TrainFront size={17} strokeWidth={2.2} aria-hidden />
         </span>
-        <div>
-          <span className="block text-sm font-bold tracking-tight text-ink">{t("app.name")}</span>
-          <span className="block text-[11px] font-medium text-dim">{t("app.division")}</span>
-        </div>
+        <span className="min-w-0">
+          <span className="block text-[12.5px] font-extrabold leading-none tracking-tight text-ink">RAIL RAKSHAK</span>
+          <span className="mt-0.5 block truncate text-[10.5px] text-dim">{t("app.division")}</span>
+        </span>
       </Link>
 
-      {/* Role Profile Box */}
-      <div className="border-b border-edge p-3.5">
-        {role && meta ? (
-          <div className="rounded-xl border border-edge bg-abyss p-3">
+      {/* Desk / session panel */}
+      <div className="mx-3 mb-2 border border-edge bg-panel">
+        {session ? (
+          <div className="p-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-medium text-faint">{t("role.active")}</span>
-              <span
-                className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: meta.color }}
-              />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-faint">Active desk</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-mint anim-blink" aria-hidden />
             </div>
-            <p className="mt-1 text-xs font-semibold text-ink">
-              {role.role === "KARMI" && role.dept ? DEPT_LABEL[role.dept].split(" — ")[0] : t(`role.${role.role.toLowerCase()}`)}
-            </p>
-            {role.role === "KARMI" && role.dept && (
-              <p className="mt-0.5 text-[11px] text-dim">{DEPT_LABEL[role.dept].split(" — ")[1]}</p>
-            )}
+            <p className="mt-1 text-[12px] font-semibold text-ink">{roleName}</p>
+            <p className="truncate text-[10.5px] text-dim">{session.unit}</p>
+            {deptName && <p className="mt-0.5 text-[10.5px] text-dim">{deptName}</p>}
+
             <button
               onClick={() => setSwitching(!switching)}
-              className="mt-2.5 flex w-full items-center justify-between rounded-lg border border-edge bg-hull px-2.5 py-1.5 text-[11px] font-medium text-dim hover:text-ink transition"
+              className="mt-2 flex w-full items-center justify-between border border-edge bg-abyss px-2 py-1 text-[10.5px] font-medium text-dim hover:border-primary hover:text-primary"
+              aria-expanded={switching}
             >
-              <span>{t("role.switch")}</span>
-              <ChevronRight size={13} className={switching ? "rotate-90" : ""} />
+              <span>Change desk</span>
+              <ChevronRight size={12} className={switching ? "rotate-90" : ""} aria-hidden />
             </button>
+
             {switching && (
-              <div className="anim-rise mt-2 grid grid-cols-2 gap-1.5 border-t border-edge pt-2">
-                {(["DRM", "CONTROL", "INSPECTOR", "KARMI"] as Role[]).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => quickSwitch(r)}
-                    className="rounded-md border border-edge bg-hull px-2 py-1.5 text-left text-[10.5px] font-medium text-dim hover:border-primary/40 hover:text-ink transition"
-                  >
-                    {r === "CONTROL" ? "COA Room" : t(`role.${r.toLowerCase()}`).split(" ")[0]}
-                  </button>
-                ))}
+              <div className="anim-rise mt-2 space-y-1.5 border-t border-edge pt-2">
+                <p className="text-[10px] leading-relaxed text-faint">
+                  Your desk is decided by the account you sign in with. Use another account to work at another desk.
+                </p>
+                <Link href="/login" className="btn btn-sm w-full">
+                  <KeyRound size={11} aria-hidden /> Sign in as another account
+                </Link>
+                <button onClick={signOut} className="btn btn-sm btn-danger w-full">
+                  <LogOut size={11} aria-hidden /> {t("btn.signout")}
+                </button>
               </div>
             )}
           </div>
         ) : (
-          <Link
-            href="/login"
-            className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-primary hover:bg-primary/10 transition"
-          >
-            <KeyRound size={15} />
-            <span className="text-xs font-semibold">{t("btn.select.desk")}</span>
+          <Link href="/login" className="flex items-center gap-2 p-3 text-primary hover:bg-primary/[0.04]">
+            <KeyRound size={14} aria-hidden />
+            <span className="text-[11.5px] font-semibold">{t("btn.select.desk")}</span>
           </Link>
         )}
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        <p className="px-2 pb-1.5 text-[10.5px] font-semibold tracking-wider text-faint uppercase">{t("nav.operations")}</p>
-        {visibleNav.map((n) => {
-          const active = path.startsWith(n.href);
-          return (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
-                active
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-dim hover:bg-abyss hover:text-ink font-medium"
-              }`}
-            >
-              <n.icon size={17} className={active ? "text-primary" : "text-faint group-hover:text-dim"} />
-              <div className="min-w-0 flex-1">
-                <span className="block text-xs leading-snug">{t(n.labelKey)}</span>
-                <span className="block truncate text-[10px] text-faint group-hover:text-dim/80">{t(n.hintKey)}</span>
-              </div>
-              {active && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-            </Link>
-          );
-        })}
+      {/* Module navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 pb-4">
+        {signInNeeded && (
+          <p className="mb-2 border border-saffron/35 bg-saffron/[0.06] p-2 text-[10.5px] leading-relaxed text-saffron">
+            Sign in to open your modules. Public desks below need no sign-in.
+          </p>
+        )}
 
-        <div className="pt-4">
-          <p className="px-2 pb-1.5 text-[10.5px] font-semibold tracking-wider text-faint uppercase">{t("nav.system")}</p>
-          <Link
-            href="/"
-            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
-              path === "/"
-                ? "bg-primary/10 text-primary font-semibold"
-                : "text-dim hover:bg-abyss hover:text-ink font-medium"
-            }`}
-          >
-            <LayoutGrid size={17} className={path === "/" ? "text-primary" : "text-faint group-hover:text-dim"} />
-            <div className="min-w-0 flex-1">
-              <span className="block text-xs leading-snug">{t("nav.overview")}</span>
-              <span className="block truncate text-[10px] text-faint">{t("nav.overview.hint")}</span>
-            </div>
-          </Link>
-        </div>
-
-        {/* PUBLIC citizen portal — clearly separated from internal operations */}
-        <div className="pt-4">
-          <p className="px-2 pb-1.5 text-[10.5px] font-semibold tracking-wider text-faint uppercase">{t("nav.public")}</p>
-          <Link
-            href="/trains"
-            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
-              path === "/trains"
-                ? "bg-mint/10 text-mint font-semibold"
-                : "text-dim hover:bg-abyss hover:text-ink font-medium"
-            }`}
-          >
-            <Users size={17} className={path === "/trains" ? "text-mint" : "text-faint group-hover:text-dim"} />
-            <div className="min-w-0 flex-1">
-              <span className="block text-xs leading-snug">{t("nav.trains")}</span>
-              <span className="block truncate text-[10px] text-faint">{t("nav.trains.hint")}</span>
-            </div>
-          </Link>
-        </div>
+        {groups.map((group) => (
+          <div key={group.id} className="mb-3">
+            <p className="flex items-center gap-1.5 px-1 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-faint">
+              <LayoutGrid size={10} aria-hidden /> {group.label}
+            </p>
+            <ul className="space-y-[2px]">
+              {group.items.map((n) => {
+                const active = path === n.href || path.startsWith(`${n.href}/`);
+                const label = n.labelKey ? t(n.labelKey) : n.label;
+                return (
+                  <li key={n.href}>
+                    <Link
+                      href={n.href}
+                      aria-current={active ? "page" : undefined}
+                      className={`group flex items-start gap-2 border-l-2 py-1.5 pl-2 pr-1.5 ${
+                        active ? "border-saffron bg-primary/[0.06] text-primary" : "border-transparent text-dim hover:border-edge hover:bg-abyss hover:text-ink"
+                      }`}
+                    >
+                      <n.icon size={14} className={`mt-[1px] shrink-0 ${active ? "text-primary" : "text-faint group-hover:text-dim"}`} aria-hidden />
+                      <span className="min-w-0">
+                        <span className={`block text-[11.5px] leading-snug ${active ? "font-bold" : "font-medium"}`}>{label}</span>
+                        {n.hint && <span className="block truncate text-[10px] text-faint">{n.hint}</span>}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
-      {/* Connected Feeds Footer */}
-      <div className="mt-auto border-t border-edge p-4 space-y-2.5 bg-abyss/50">
+      {/* Integration contracts — documented, not live (see audit / contracts.ts) */}
+      <div className="mt-auto space-y-2 border-t border-edge bg-abyss/60 p-3">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-[10.5px] font-medium text-dim">
-            <Activity size={12} className="text-green-500" /> {t("feeds.title")}
+          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-dim">
+            <Activity size={11} className="text-cyan" aria-hidden /> Data-exchange contracts
           </span>
-          <span className="flex h-1.5 w-1.5 rounded-full bg-green-500 anim-blink" />
+          <StatusPill label="Simulated" tone="ai" />
         </div>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-1">
           {UPLINKS.map((u) => (
             <div
               key={u.name}
-              className="flex items-center justify-center rounded-md border border-edge bg-hull py-1 text-[10px] font-mono text-dim font-medium"
               title={u.label}
+              className="flex items-center justify-center border border-edge bg-hull py-1 font-mono text-[10px] font-semibold text-dim"
             >
               {u.name}
             </div>
           ))}
         </div>
+        <p className="text-[10px] leading-relaxed text-faint">
+          Contract shapes are documented in code and served from the seeded data lake; no live departmental endpoint is contacted in this build.
+        </p>
       </div>
     </aside>
   );

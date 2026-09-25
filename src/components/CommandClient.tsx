@@ -2,15 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Activity, CloudFog, Eye, Radio, ShieldAlert, Thermometer, Timer, TrafficCone, TrainFront, Webhook, Wind, X } from "lucide-react";
+import Link from "next/link";
 import RailMap from "@/components/RailMap";
 import KpiStrip from "@/components/KpiStrip";
+import UrgencySummary from "@/components/UrgencySummary";
+import UrgencyQueue from "@/components/UrgencyQueue";
 import LiveFeed from "@/components/LiveFeed";
 import LiveBoard from "@/components/LiveBoard";
 import ConsensusMeter from "@/components/ConsensusMeter";
 import SectionInspector from "@/components/SectionInspector";
+import PageHeader from "@/components/PageHeader";
+import StatusPill from "@/components/StatusPill";
 import DrmRow from "@/components/DrmRow";
 import { CORRIDOR_COLORS, DEPT_COLORS, fmtMin } from "@/lib/engine/network";
-import { getRole, type RoleInfo } from "@/lib/role";
+import { useRole } from "@/lib/role";
 import type { DashboardState, SettingsDTO } from "@/lib/engine/types";
 
 function Toggle({
@@ -36,19 +41,19 @@ function Toggle({
       disabled={disabled}
       aria-pressed={on}
       aria-label={`${label} — currently ${on ? "on" : "off"}`}
-      className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition disabled:opacity-50 ${
-        on ? "border-edge/90 bg-panel shadow-sm" : "border-edge/50 bg-panel/30 hover:border-edge hover:bg-panel/50"
+      className={`flex w-full items-center gap-3 rounded-[4px] border p-3 text-left transition disabled:opacity-50 ${
+        on ? "border-edge/90 bg-panel" : "border-edge/50 bg-panel/30 hover:border-edge hover:bg-panel/50"
       }`}
     >
-      <span style={{ color: on ? color : "#64748b" }}>{icon}</span>
+      <span style={{ color: on ? color : "var(--color-faint)" }}>{icon}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold tracking-tight text-ink">{label}</span>
           <span
-            className="rounded px-1.5 py-0.2 text-[10px] font-mono font-semibold"
+            className="rounded-[2px] px-1.5 py-0.2 text-[10px] font-mono font-semibold"
             style={{
               backgroundColor: on ? `${color}20` : "rgba(100, 116, 139, 0.15)",
-              color: on ? color : "#94a3b8",
+              color: on ? color : "var(--color-dim)",
             }}
           >
             {on ? "ACTIVE" : "OFF"}
@@ -58,11 +63,11 @@ function Toggle({
       </div>
       <span
         className="relative shrink-0 rounded-full transition-colors duration-200"
-        style={{ height: 20, width: 38, backgroundColor: on ? color : "#1e293b" }}
+        style={{ height: 20, width: 38, backgroundColor: on ? color : "var(--color-edge)" }}
       >
         <span
           className="absolute top-[2px] h-4 w-4 rounded-full transition-all duration-200"
-          style={{ left: on ? 20 : 2, backgroundColor: on ? "#0a0e17" : "#64748b" }}
+          style={{ left: on ? 20 : 2, backgroundColor: on ? "var(--color-on-accent)" : "var(--color-faint)" }}
         />
       </span>
     </button>
@@ -70,19 +75,12 @@ function Toggle({
 }
 
 export default function CommandClient({ initial }: { initial: DashboardState }) {
+  const role = useRole();
   const [state, setState] = useState(initial);
   const [pending, setPending] = useState<string | null>(null);
   const [selectedCode, setSelectedCode] = useState<string | null>("NZM-ANVT");
-  const [role, setRole] = useState<RoleInfo | null>(null);
   const [extendBusy, setExtendBusy] = useState(false);
   const [webhookOpen, setWebhookOpen] = useState(false);
-
-  useEffect(() => {
-    setRole(getRole());
-    const sync = () => setRole(getRole());
-    window.addEventListener("rr-role", sync);
-    return () => window.removeEventListener("rr-role", sync);
-  }, []);
 
   const sigOf = (d: DashboardState) =>
     `${d.settings.fogMode}${d.settings.vipAlert}${d.settings.dtpRedZone}${d.settings.planStatus}|${d.counts.openDefects}|${d.events.length}|${d.liveTrains.length}|${d.activeBlockSegments.join(",")}|${d.latestPlan?.id ?? 0}|${d.overrun?.jobId ?? 0}|${d.overrun?.remainingMin ?? 0}`;
@@ -154,25 +152,57 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
   }
 
   return (
-    <div className="anim-rise space-y-4">
+    <div className="anim-rise space-y-3">
+      <PageHeader
+        module="OPS-CC"
+        title="Command Centre"
+        titleKey="page.command"
+        subtitleKey="page.command.sub"
+        subtitle="Divisional control-room view of the running grid: live train positions, block occupancy, the defect urgency queue, plan quality and the two-way decision loop between the AI planner and the divisional officer."
+        crumbs={[{ label: "Operations" }, { label: "Command Centre" }]}
+        state={
+          s.planStatus === "APPROVED"
+            ? "Plan approved and in force"
+            : s.planStatus === "VETOED"
+              ? "Plan vetoed by DRM — re-plan pending"
+              : "Awaiting divisional approval"
+        }
+        stateTone={s.planStatus === "APPROVED" ? "success" : s.planStatus === "VETOED" ? "critical" : "warning"}
+        reference={
+          state.latestPlan
+            ? `Plan #${state.latestPlan.id} · ${state.latestPlan.blocks.length} occupancy(ies) · ${state.activeBlockSegments.length} live`
+            : "No plan published"
+        }
+        actions={
+          <>
+            <Link href="/network" className="btn">
+              Network status
+            </Link>
+            <Link href="/planner" className="btn btn-primary">
+              Open AI Block Planner
+            </Link>
+          </>
+        }
+      />
+
       {/* Overrun Early Warning Alert */}
       {overrun && (
-        <div className="anim-rise flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+        <div className="anim-rise flex flex-wrap items-center justify-between gap-3 border border-saffron/45 bg-saffron/[0.08] px-3 py-2.5">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[3px] bg-saffron/20 text-saffron">
               <Timer size={16} className="animate-pulse" />
             </span>
             <div>
-              <p className="text-xs font-bold text-amber-300 uppercase tracking-wide">High Block Overrun Risk</p>
+              <p className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-saffron"><StatusPill label="Warning" tone="warning" /> High block overrun risk</p>
               <p className="text-xs text-ink">
-                Job #{overrun.jobId} on section <strong className="font-mono text-amber-300">{overrun.segCode}</strong> has {overrun.remainingMin} min left ({overrun.donePct}% done) — Overrun probability: <span className="font-bold text-rose-400 font-mono">{overrun.probability.toFixed(0)}%</span>
+                Job #{overrun.jobId} on section <strong className="font-mono text-saffron">{overrun.segCode}</strong> has {overrun.remainingMin} min left ({overrun.donePct}% done) — Overrun probability: <span className="font-bold text-signal font-mono">{overrun.probability.toFixed(0)}%</span>
               </p>
             </div>
           </div>
           <button
             onClick={preemptExtend}
             disabled={extendBusy}
-            className="rounded-lg bg-amber-500 px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow transition hover:bg-amber-400 disabled:opacity-50"
+            className="rounded-[3px] bg-saffron px-3.5 py-1.5 text-xs font-bold on-accent shadow transition hover:bg-saffron disabled:opacity-50"
           >
             {extendBusy ? "Extending…" : "Pre-emptively Extend +30m"}
           </button>
@@ -183,25 +213,31 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
 
       <KpiStrip state={state} />
 
+      {/* Urgency engine + lifecycle roll-up (PS #26027) */}
+      <div className="grid gap-3 xl:grid-cols-[360px_1fr]">
+        <UrgencySummary summary={state.urgency} />
+        <UrgencyQueue items={state.urgencyQueue} limit={8} />
+      </div>
+
       {/* Main Grid View */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
         {/* Rail Map Section */}
         <section className="panel relative overflow-hidden xl:col-span-2">
           <div className="panel-hd">
             <span className="flex items-center gap-2">
-              <Radio size={14} className="text-emerald-400" />
+              <Radio size={14} className="text-mint" />
               Delhi NCR Live Grid (19 Sections · {runningCount} Active Trains)
             </span>
             <div className="flex items-center gap-3 text-xs text-dim">
-              <span className="flex items-center gap-1 text-amber-400"><Thermometer size={12} />{state.weather.tempC}°C</span>
-              <span className="flex items-center gap-1 text-sky-400"><Wind size={12} />{state.weather.humidityPct}% RH</span>
-              <span className={`flex items-center gap-1 font-mono ${s.fogMode ? "text-rose-400" : "text-emerald-400"}`}>
+              <span className="flex items-center gap-1 text-saffron"><Thermometer size={12} />{state.weather.tempC}°C</span>
+              <span className="flex items-center gap-1 text-cyan"><Wind size={12} />{state.weather.humidityPct}% RH</span>
+              <span className={`flex items-center gap-1 font-mono ${s.fogMode ? "text-signal" : "text-mint"}`}>
                 <Eye size={12} />Vis: {state.weather.visibilityM >= 1000 ? `${(state.weather.visibilityM / 1000).toFixed(1)}km` : `${state.weather.visibilityM}m`}
               </span>
             </div>
           </div>
 
-          <div className="gridlines relative bg-[#070b13] p-2">
+          <div className="map-canvas gridlines relative p-2">
             <RailMap
               stations={state.stations}
               segments={state.segments}
@@ -214,8 +250,8 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
             />
 
             {s.fogMode && (
-              <div className="anim-rise absolute left-4 top-4 rounded-xl border border-rose-500/40 bg-hull/90 p-3 shadow-lg backdrop-blur-md">
-                <p className="flex items-center gap-2 text-xs font-bold text-rose-400">
+              <div className="anim-rise absolute left-4 top-4 rounded-[4px] border border-signal/40 bg-hull/90 p-3 shadow-[0_4px_16px_-6px_rgba(16,35,63,0.35)] ">
+                <p className="flex items-center gap-2 text-xs font-bold text-signal">
                   <CloudFog size={15} /> Winter Fog Protocol Active
                 </p>
                 <p className="mt-1 max-w-xs text-[11px] text-dim leading-relaxed">
@@ -225,8 +261,8 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
             )}
 
             {s.vipAlert && (
-              <div className="anim-rise absolute right-4 top-4 rounded-xl border border-amber-500/40 bg-hull/90 p-3 shadow-lg backdrop-blur-md">
-                <p className="flex items-center gap-2 text-xs font-bold text-amber-400">
+              <div className="anim-rise absolute right-4 top-4 rounded-[4px] border border-saffron/40 bg-hull/90 p-3 shadow-[0_4px_16px_-6px_rgba(16,35,63,0.35)] ">
+                <p className="flex items-center gap-2 text-xs font-bold text-saffron">
                   <ShieldAlert size={15} /> VVIP Security Corridor
                 </p>
                 <p className="mt-1 max-w-xs text-[11px] text-dim leading-relaxed">
@@ -247,7 +283,7 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
         </section>
 
         {/* Right Operational Controls */}
-        <section className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3">
           <div className="panel">
             <div className="panel-hd">
               <span>Operating Mode Triggers</span>
@@ -258,7 +294,7 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
                 label="Dense Fog Mode"
                 sub="Suspend physical blocks & trigger DAS sensing"
                 on={s.fogMode}
-                color="#f43f5e"
+                color="var(--color-signal)"
                 icon={<CloudFog size={18} />}
                 onClick={() => toggle("fogMode")}
                 disabled={pending !== null}
@@ -267,7 +303,7 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
                 label="VVIP Security Corridor"
                 sub="Enforce 5 km NDLS buffer with RPF feeds"
                 on={s.vipAlert}
-                color="#f59e0b"
+                color="var(--color-saffron)"
                 icon={<ShieldAlert size={18} />}
                 onClick={() => toggle("vipAlert")}
                 disabled={pending !== null}
@@ -276,7 +312,7 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
                 label="Delhi Traffic Police Sync"
                 sub="Avoid level crossing gates during rush hours"
                 on={s.dtpRedZone}
-                color="#0ea5e9"
+                color="var(--color-cyan)"
                 icon={<TrafficCone size={18} />}
                 onClick={() => toggle("dtpRedZone")}
                 disabled={pending !== null}
@@ -287,7 +323,7 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
           <div className="panel flex-1 flex flex-col">
             <div className="panel-hd">
               <span className="flex items-center gap-2">
-                <TrainFront size={14} className="text-amber-400" /> Live NTES Train Departures
+                <TrainFront size={14} className="text-saffron" /> Live NTES Train Departures
               </span>
               <span className="text-[10.5px] text-faint">COA Synced</span>
             </div>
@@ -299,7 +335,7 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
       </div>
 
       {/* Row 3: Section Inspector, Consensus, Load, and Audit Stream */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-4">
         <section className="panel min-h-[280px]">
           <div className="panel-hd"><span>Section Inspector</span></div>
           <SectionInspector segment={selectedSegment} />
@@ -334,7 +370,7 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
                   />
                   <div
                     className="h-full rounded-r-full transition-all duration-700"
-                    style={{ width: `${Math.min(40, d.critical * 8)}%`, backgroundColor: "#f43f5e" }}
+                    style={{ width: `${Math.min(40, d.critical * 8)}%`, backgroundColor: "var(--color-signal)" }}
                   />
                 </div>
                 <p className="mt-1 text-[10.5px] text-faint font-mono">
@@ -348,11 +384,11 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
         <section className="panel min-h-[280px]">
           <div className="panel-hd">
             <span className="flex items-center gap-2">
-              Event Spine <span className="anim-blink h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Event Spine <span className="anim-blink h-1.5 w-1.5 rounded-full bg-mint" />
             </span>
             <button
               onClick={() => setWebhookOpen(true)}
-              className="flex items-center gap-1 rounded-lg border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10.5px] font-semibold text-sky-400 hover:bg-sky-500/20 transition"
+              className="flex items-center gap-1 rounded-[3px] border border-cyan/30 bg-cyan/10 px-2 py-1 text-[10.5px] font-semibold text-cyan hover:bg-cyan/20 transition"
             >
               <Webhook size={11} /> Outbound Stream
             </button>
@@ -365,17 +401,17 @@ export default function CommandClient({ initial }: { initial: DashboardState }) 
 
       {/* Outbound Webhook Modal */}
       {webhookOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" onClick={() => setWebhookOpen(false)}>
-          <div className="anim-rise w-full max-w-lg overflow-hidden rounded-2xl border border-sky-500/30 bg-hull shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-sky-500/20 bg-sky-500/[0.06] px-5 py-3.5">
-              <p className="flex items-center gap-2 text-xs font-semibold text-sky-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/80 p-4 " onClick={() => setWebhookOpen(false)}>
+          <div className="anim-rise w-full max-w-lg overflow-hidden rounded-[4px] border border-cyan/30 bg-hull shadow-[0_4px_16px_-6px_rgba(16,35,63,0.35)]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-cyan/20 bg-cyan/[0.06] px-5 py-3.5">
+              <p className="flex items-center gap-2 text-xs font-semibold text-cyan">
                 <Webhook size={15} /> Outbound Payload — NTES & SIMRAN Stream
               </p>
-              <button onClick={() => setWebhookOpen(false)} className="rounded-lg p-1 text-dim hover:text-ink">
+              <button onClick={() => setWebhookOpen(false)} className="rounded-[3px] p-1 text-dim hover:text-ink">
                 <X size={15} />
               </button>
             </div>
-            <pre className="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-emerald-400/90 bg-[#070b13]">
+            <pre className="code-panel overflow-x-auto p-4 font-mono text-[11.5px] leading-relaxed">
 {`POST https://ntes.indianrailways.gov.in/api/v2/tsr HTTP/1.1
 Authorization: Bearer ••••••••
 X-Rakshak-Signature: sha256:9f2c7a…e1

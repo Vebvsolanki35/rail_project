@@ -6,6 +6,8 @@ import RailMap from "@/components/RailMap";
 import BeforeAfterModal from "@/components/BeforeAfterModal";
 import SmartImg from "@/components/SmartImg";
 import { DEPT_COLORS, INSPECTOR_ZONE, KARMI_TEAMS, fmtMin } from "@/lib/engine/network";
+import PageHeader from "@/components/PageHeader";
+import StatusPill from "@/components/StatusPill";
 import type { DashboardState, JobDTO } from "@/lib/engine/types";
 
 const WINDOWS = [
@@ -83,41 +85,57 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
   const blockedIds = zoneJobs.filter((j) => j.status === "IN_PROGRESS").map((j) => j.segmentId);
 
   return (
-    <div className="anim-rise space-y-4">
+    <div className="anim-rise space-y-3">
+      <PageHeader
+        module="FLD-INS"
+        title="Field Dashboard"
+        titleKey="page.field"
+        subtitleKey="page.field.sub"
+        subtitle={`Inspector beat operations — allot verified defects to a gang with a sanctioned block window, follow work on site, and validate completed repairs against GPS-stamped evidence. Beat: ${INSPECTOR_ZONE.name}.`}
+        crumbs={[{ label: "Maintenance" }, { label: "Field Dashboard" }]}
+        state={
+          awaiting.length > 0
+            ? `${awaiting.length} repair(s) awaiting inspector sign-off`
+            : active.length > 0
+              ? `${active.length} gang(s) working on the beat`
+              : pending.length > 0
+                ? `${pending.length} defect(s) pending allotment`
+                : "Beat clear"
+        }
+        stateTone={pending.length > 0 ? "critical" : awaiting.length > 0 ? "warning" : "success"}
+        reference={INSPECTOR_ZONE.sections.join(" · ")}
+      />
+
       {/* Zone Header */}
-      <section className="panel flex flex-wrap items-center justify-between gap-4 p-5">
+      <section className="panel flex flex-wrap items-center justify-between gap-3 p-3">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
-            <HardHat size={20} />
+          <span className="flex h-9 w-9 items-center justify-center rounded-[4px] border border-saffron/30 bg-saffron/15 text-saffron">
+            <HardHat size={18} aria-hidden />
           </span>
           <div>
-            <h2 className="text-base font-bold text-ink">Section Inspector — Field Operations Desk</h2>
-            <p className="text-xs text-dim">{INSPECTOR_ZONE.name} · Assigned Sections: {INSPECTOR_ZONE.sections.join(" · ")}</p>
+            <h2 className="text-[13px] font-bold text-ink">Field operations console</h2>
+            <p className="text-[11px] text-dim">
+              {INSPECTOR_ZONE.name} · Assigned sections: {INSPECTOR_ZONE.sections.join(" · ")}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-400">
-            {pending.length} Pending Allotment
-          </span>
-          <span className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-400">
-            {active.length} Active on Track
-          </span>
-          <span className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400">
-            {awaiting.length} Ready for Sign-Off
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill label={`${pending.length} pending allotment`} tone={pending.length ? "critical" : "success"} />
+          <StatusPill label={`${active.length} active on track`} tone={active.length ? "warning" : "neutral"} />
+          <StatusPill label={`${awaiting.length} ready for sign-off`} tone={awaiting.length ? "info" : "neutral"} />
         </div>
       </section>
 
       {/* Grid: Map on Left, Active Worklists on Right */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
         {/* Track Jurisdiction Map */}
         <section className="panel xl:col-span-1 overflow-hidden flex flex-col">
           <div className="panel-hd">
             <span>Inspector Beat Focus</span>
-            <span className="text-[10px] text-emerald-400 font-mono">NDLS Sector</span>
+            <span className="text-[10px] text-mint font-mono">NDLS Sector</span>
           </div>
-          <div className="gridlines relative flex-1 p-2 bg-[#070b13]">
+          <div className="map-canvas gridlines relative flex-1 p-2">
             <RailMap
               stations={dash.stations}
               segments={dash.segments}
@@ -131,11 +149,11 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
         </section>
 
         {/* Actionable Tickets */}
-        <section className="xl:col-span-2 space-y-4">
+        <section className="xl:col-span-2 space-y-3">
           {/* Awaiting Review (Verification & Sign-off) */}
           {awaiting.length > 0 && (
-            <div className="panel border-emerald-500/40 bg-emerald-500/[0.02]">
-              <div className="panel-hd border-emerald-500/20 text-emerald-400">
+            <div className="panel border-mint/40 bg-mint/[0.02]">
+              <div className="panel-hd border-mint/20 text-mint">
                 <span className="flex items-center gap-2">
                   <ClipboardCheck size={14} /> Completed Repairs Awaiting Sign-Off ({awaiting.length})
                 </span>
@@ -143,12 +161,12 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
               </div>
               <div className="divide-y divide-edge/60">
                 {awaiting.map((j) => (
-                  <div key={j.id} className="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-white/[0.02] transition">
+                  <div key={j.id} className="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-primary/[0.03] transition">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-amber-400">#{j.id}</span>
+                        <span className="font-mono text-xs font-bold text-saffron">#{j.id}</span>
                         <h4 className="text-xs font-bold text-ink truncate">{j.title}</h4>
-                        <span className="rounded px-1.5 py-0.2 text-[10px] font-semibold" style={{ color: DEPT_COLORS[j.department] }}>
+                        <span className="rounded-[2px] px-1.5 py-0.2 text-[10px] font-semibold" style={{ color: DEPT_COLORS[j.department] }}>
                           {j.department}
                         </span>
                       </div>
@@ -159,7 +177,7 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
 
                     <button
                       onClick={() => setReviewJob(j)}
-                      className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-slate-950 shadow transition hover:bg-emerald-400"
+                      className="flex items-center gap-1.5 rounded-[4px] bg-mint px-4 py-2 text-xs font-bold on-accent shadow transition hover:bg-mint"
                     >
                       <ClipboardCheck size={14} /> Review & Sign-Off Block
                     </button>
@@ -180,12 +198,12 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
                 <p className="p-8 text-center text-xs text-dim">All defects in your beat are currently allotted.</p>
               )}
               {pending.map((j) => (
-                <div key={j.id} className="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-white/[0.02] transition">
+                <div key={j.id} className="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-primary/[0.03] transition">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-amber-400">#{j.id}</span>
+                      <span className="font-mono text-xs font-bold text-saffron">#{j.id}</span>
                       <h4 className="text-xs font-bold text-ink">{j.title}</h4>
-                      <span className="rounded px-1.5 py-0.2 text-[10px] font-semibold" style={{ color: DEPT_COLORS[j.department] }}>
+                      <span className="rounded-[2px] px-1.5 py-0.2 text-[10px] font-semibold" style={{ color: DEPT_COLORS[j.department] }}>
                         {j.department}
                       </span>
                     </div>
@@ -199,7 +217,7 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
                       setAllotTarget(j);
                       setTeamSel((prev) => ({ ...prev, [j.id]: `${KARMI_TEAMS[j.department][0].id} — ${KARMI_TEAMS[j.department][0].leader}` }));
                     }}
-                    className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3.5 py-1.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/20 transition"
+                    className="flex items-center gap-1.5 rounded-[4px] border border-saffron/40 bg-saffron/10 px-3.5 py-1.5 text-xs font-semibold text-saffron hover:bg-saffron/20 transition"
                   >
                     <Send size={12} /> Allot Crew & Window
                   </button>
@@ -219,12 +237,12 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
                 <p className="p-6 text-center text-xs text-dim">No crews currently occupying the track.</p>
               )}
               {active.map((j) => (
-                <div key={j.id} className="flex items-center justify-between p-3.5 hover:bg-white/[0.02]">
+                <div key={j.id} className="flex items-center justify-between p-3.5 hover:bg-primary/[0.03]">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-ink">#{j.id}</span>
                       <span className="text-xs font-bold text-ink">{j.title}</span>
-                      <span className={`rounded px-1.5 py-0.2 text-[10px] font-bold ${j.status === "IN_PROGRESS" ? "bg-amber-500/15 text-amber-400" : "bg-sky-500/15 text-sky-400"}`}>
+                      <span className={`rounded-[2px] px-1.5 py-0.2 text-[10px] font-bold ${j.status === "IN_PROGRESS" ? "bg-saffron/15 text-saffron" : "bg-cyan/15 text-cyan"}`}>
                         {j.status === "IN_PROGRESS" ? "On Site / Working" : "Allotted"}
                       </span>
                     </div>
@@ -233,7 +251,7 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
                     </p>
                   </div>
                   {j.beforePhoto && (
-                    <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
+                    <span className="flex items-center gap-1 text-[11px] text-mint font-medium">
                       <CheckCircle2 size={12} /> Before-Photo Locked
                     </span>
                   )}
@@ -246,23 +264,23 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
 
       {/* Allotment Popup Modal */}
       {allotTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" onClick={() => setAllotTarget(null)}>
-          <div className="anim-rise w-full max-w-md overflow-hidden rounded-2xl border border-amber-500/30 bg-hull shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/80 p-4 " onClick={() => setAllotTarget(null)}>
+          <div className="anim-rise w-full max-w-md overflow-hidden rounded-[4px] border border-saffron/30 bg-hull shadow-[0_4px_16px_-6px_rgba(16,35,63,0.35)]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-edge px-5 py-3.5">
               <div>
-                <p className="text-xs font-bold text-amber-400">Allot Maintenance Block</p>
+                <p className="text-xs font-bold text-saffron">Allot Maintenance Block</p>
                 <h3 className="text-sm font-bold text-ink mt-0.5">{allotTarget.title}</h3>
               </div>
-              <button onClick={() => setAllotTarget(null)} className="rounded-lg p-1 text-dim hover:text-ink"><X size={15} /></button>
+              <button onClick={() => setAllotTarget(null)} className="rounded-[3px] p-1 text-dim hover:text-ink"><X size={15} /></button>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-dim mb-1.5">Assign Gang Team Leader</label>
                 <select
                   value={teamSel[allotTarget.id] ?? ""}
                   onChange={(e) => setTeamSel((prev) => ({ ...prev, [allotTarget.id]: e.target.value }))}
-                  className="w-full rounded-xl border border-edge bg-panel px-3 py-2 text-xs font-medium text-ink outline-none"
+                  className="w-full rounded-[4px] border border-edge bg-panel px-3 py-2 text-xs font-medium text-ink outline-none"
                 >
                   {KARMI_TEAMS[allotTarget.department]?.map((t) => (
                     <option key={t.id} value={`${t.id} — ${t.leader}`}>
@@ -280,9 +298,9 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
                       key={w.label}
                       type="button"
                       onClick={() => setWinSel((prev) => ({ ...prev, [allotTarget.id]: idx }))}
-                      className={`flex w-full items-center justify-between rounded-xl border p-3 text-xs font-medium transition ${
+                      className={`flex w-full items-center justify-between rounded-[4px] border p-3 text-xs font-medium transition ${
                         (winSel[allotTarget.id] ?? 0) === idx
-                          ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
+                          ? "border-saffron/60 bg-saffron/15 text-saffron"
                           : "border-edge bg-panel text-dim hover:text-ink"
                       }`}
                     >
@@ -296,7 +314,7 @@ export default function FieldClient({ initialState, initialJobs }: { initialStat
               <button
                 onClick={confirmAllot}
                 disabled={busy !== null}
-                className="w-full rounded-xl bg-amber-500 py-2.5 text-xs font-bold text-slate-950 shadow transition hover:bg-amber-400 disabled:opacity-50"
+                className="w-full rounded-[4px] bg-saffron py-2.5 text-xs font-bold on-accent shadow transition hover:bg-saffron disabled:opacity-50"
               >
                 {busy === allotTarget.id ? "Allotting…" : "Confirm Allotment & Transmit Permit"}
               </button>

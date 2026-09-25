@@ -1,177 +1,338 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   RAIL RAKSHAK — DESIGN SYSTEM
+   Government railway operations portal.
+   Identity rules:
+     · deep railway navy + white + light grey structure
+     · saffron/orange reserved for the government accent and warnings
+     · teal-green for operational success, signal red only for critical
+     · thin borders, compact cards, dense tables, restrained motion
+   Token NAMES are unchanged from the previous theme, so every existing
+   component inherits the new identity without logic changes.
+   ========================================================================== */
+
+/* The portal's day/night switch drives `dark:` utilities (the switch sets
+   data-theme on <html>; without this variant Tailwind would follow the OS
+   preference instead of the in-app control). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
   --font-display: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* ─── Default = Light mode tokens ─── */
-  --color-abyss: #f3f4f6;
-  --color-hull: #ffffff;
-  --color-panel: #ffffff;
-  --color-edge: #d1d5db;
-  --color-ink: #1f2937;
-  --color-dim: #6b7280;
-  --color-faint: #9ca3af;
+  /* ─── Light = government portal (default) ─── */
+  --color-abyss: #eceff4;   /* page background — light grey */
+  --color-hull: #ffffff;    /* chrome / header / nav surfaces */
+  --color-panel: #ffffff;   /* content panels */
+  --color-edge: #ccd6e0;    /* hairline borders */
+  --color-ink: #10233f;     /* dark navy typography */
+  --color-dim: #46586f;     /* secondary text */
+  --color-faint: #63748b;   /* metadata text — 4.6:1 on white */
 
-  /* ─── Accent palette — Indian Railway inspired ─── */
-  --color-primary: #1d4ed8;
-  --color-amber: #b45309;
-  --color-saffron: #c2410c;
-  --color-signal: #dc2626;
-  --color-mint: #15803d;
-  --color-cyan: #0369a1;
-  --color-violet: #7c3aed;
+  /* ─── Functional palette ─── */
+  --color-primary: #123a6b;  /* railway navy — primary actions, headers */
+  --color-amber: #a25c00;    /* warning text */
+  --color-saffron: #c2570a;  /* government/railway accent */
+  --color-signal: #b3231a;   /* critical only */
+  --color-mint: #0f6b52;     /* operational success / clear */
+  --color-cyan: #0d5f92;     /* informational */
+  --color-violet: #46428c;   /* AI decision-support accent */
+
+  /* Text placed on a filled accent (saffron/mint/primary/signal) surface.
+     Light theme ⇒ white; night theme ⇒ dark navy (the night accents are
+     lighter fills, so dark text keeps both contrast and legibility). */
+  --color-on-accent: #ffffff;
 }
 
-/* ─── Light Mode (default) ─── */
+/* ─── Light mode surface values ─── */
 html {
   background: var(--color-abyss);
   color-scheme: light;
-  scrollbar-color: #c4c8d0 #f3f4f6;
+  scrollbar-color: #b9c3d0 #eceff4;
 }
 
 body {
   background: var(--color-abyss);
   color: var(--color-ink);
   font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Dark Mode Override ─── */
+/* ─── Dark mode = night control room ─── */
 [data-theme="dark"] {
-  --color-abyss: #1a1d23;
-  --color-hull: #22262e;
-  --color-panel: #2a2e36;
-  --color-edge: #3f434d;
-  --color-ink: #e5e7eb;
-  --color-dim: #9ca3af;
-  --color-faint: #6b7280;
-  --color-primary: #3b82f6;
-  --color-amber: #d97706;
-  --color-saffron: #ea580c;
-  --color-signal: #ef4444;
-  --color-mint: #22c55e;
-  --color-cyan: #0ea5e9;
-  --color-violet: #8b5cf6;
-
+  --color-abyss: #0b1626;
+  --color-hull: #101f33;
+  --color-panel: #14273d;
+  --color-edge: #24405c;
+  --color-ink: #e8eef7;
+  --color-dim: #a7b8cd;
+  --color-faint: #7d92aa;
+  --color-primary: #4b8fd6;
+  --color-amber: #e0a63a;
+  --color-saffron: #f0a04b;
+  --color-signal: #f2705f;
+  --color-mint: #43c59e;
+  --color-cyan: #58b6e8;
+  --color-violet: #8f9bd8;
+  --color-on-accent: #0b1626;
   color-scheme: dark;
-  scrollbar-color: #3f434d #1a1d23;
+  scrollbar-color: #24405c #0b1626;
 }
 
-/* ---------- Custom Scrollbars ---------- */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: var(--color-edge); border-radius: 6px; }
+/* ---------- Scrollbars ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--color-edge); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-faint); }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* ---------- Indian Tricolor Stripe ---------- */
+/* ---------- Official tricolour rule (used sparingly) ---------- */
 .tricolor {
   height: 3px;
-  background: linear-gradient(90deg, #f97316 0 33.3%, #f8fafc 33.3% 66.6%, #16a34a 66.6% 100%);
+  background: linear-gradient(90deg, #e0741f 0 33.3%, #f4f6f9 33.3% 66.6%, #12694c 66.6% 100%);
 }
+.tricolor-thin { height: 2px; }
 
-/* ---------- Panels — Clean, Structured ---------- */
+/* ---------- Panels — compact, bordered, official ---------- */
 .panel {
   background: var(--color-panel);
   border: 1px solid var(--color-edge);
-  border-radius: 10px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(16, 35, 63, 0.05);
 }
-[data-theme="dark"] .panel {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
-}
+[data-theme="dark"] .panel { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
 
 .panel-hd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  min-height: 40px;
-  padding: 9px 16px;
+  gap: 10px;
+  min-height: 38px;
+  padding: 8px 14px;
+  background: #f5f7fa;
   border-bottom: 1px solid var(--color-edge);
   font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-dim);
+  color: var(--color-primary);
 }
+[data-theme="dark"] .panel-hd { background: rgba(255, 255, 255, 0.03); color: #bcd4f0; }
+
+.panel-bd { padding: 14px; }
 
 .sec-num {
   font-family: var(--font-mono);
+  font-size: 10.5px;
   color: var(--color-faint);
   margin-right: 8px;
 }
 
+/* ---------- Section rules & module headers ---------- */
+.rule {
+  height: 1px;
+  background: var(--color-edge);
+  border: 0;
+  margin: 0;
+}
+
+.dept-bar {
+  border-left: 3px solid var(--color-saffron);
+  padding-left: 10px;
+}
+
+/* ---------- Breadcrumbs ---------- */
+.crumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--color-faint);
+}
+.crumb a:hover { color: var(--color-primary); text-decoration: underline; }
+.crumb .sep { color: var(--color-edge); }
+.crumb .cur { color: var(--color-dim); font-weight: 600; }
+
+/* ---------- Government data tables ---------- */
+.gov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.gov-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 10px;
+  background: #eef1f6;
+  border-bottom: 1px solid var(--color-edge);
+  border-top: 1px solid var(--color-edge);
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-dim);
+  white-space: nowrap;
+}
+[data-theme="dark"] .gov-table thead th { background: rgba(255, 255, 255, 0.04); }
+.gov-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-edge) 65%, transparent);
+  vertical-align: middle;
+}
+.gov-table tbody tr:hover { background: color-mix(in srgb, var(--color-primary) 4%, transparent); }
+.gov-table tbody tr:last-child td { border-bottom: 0; }
+.gov-table .num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+.gov-table .sr { width: 40px; color: var(--color-faint); font-family: var(--font-mono); }
+.gov-table .ref { font-family: var(--font-mono); font-size: 11px; color: var(--color-primary); }
+.gov-table-wrap { overflow: auto; max-width: 100%; }
+
+/* ---------- Key/value metadata blocks ---------- */
+.kv { display: grid; grid-template-columns: minmax(96px, auto) 1fr; gap: 6px 12px; font-size: 12px; }
+.kv dt { color: var(--color-faint); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.kv dd { color: var(--color-ink); font-weight: 500; }
+.kv-mono dd { font-family: var(--font-mono); }
+
+/* ---------- Formal action buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-edge);
+  border-radius: 3px;
+  background: var(--color-panel);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+.btn:disabled { opacity: 0.55; }
+.btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-accent); }
+.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 88%, #000); color: var(--color-on-accent); border-color: transparent; }
+.btn-accent { background: var(--color-saffron); border-color: var(--color-saffron); color: var(--color-on-accent); }
+.btn-accent:hover:not(:disabled) { background: color-mix(in srgb, var(--color-saffron) 88%, #000); color: var(--color-on-accent); border-color: transparent; }
+.btn-danger { border-color: color-mix(in srgb, var(--color-signal) 55%, transparent); color: var(--color-signal); }
+.btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--color-signal) 10%, transparent); color: var(--color-signal); border-color: var(--color-signal); }
+.btn-sm { min-height: 26px; padding: 0 9px; font-size: 11px; }
+.btn-link { border-color: transparent; background: transparent; color: var(--color-primary); padding: 0 4px; min-height: 24px; }
+.btn-link:hover { text-decoration: underline; }
+
+/* ---------- Focus & accessibility ---------- */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+[data-theme="dark"] :focus-visible { outline-color: #7fb2e6; }
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 8px 14px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.skip-link:focus { left: 8px; top: 8px; }
+
+/* ---------- Operational grid backdrop (maps / diagrams) ---------- */
 .gridlines {
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(16, 35, 63, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 35, 63, 0.05) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 [data-theme="dark"] .gridlines {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
-/* ---------- Keyframes ---------- */
+/* ---------- Keyframes (restrained) ---------- */
 @keyframes dashflow { to { stroke-dashoffset: -120; } }
-@keyframes blinkdot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-@keyframes fogdrift {
-  0% { transform: translateX(-4%); }
-  50% { transform: translateX(4%); }
-  100% { transform: translateX(-4%); }
-}
+@keyframes blinkdot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes fogdrift { 0% { transform: translateX(-4%); } 50% { transform: translateX(4%); } 100% { transform: translateX(-4%); } }
 @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-@keyframes riseIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
+@keyframes riseIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
 @keyframes spinSlow { to { transform: rotate(360deg); } }
 
 .anim-flow { animation: dashflow 4s linear infinite; }
-.anim-blink { animation: blinkdot 2s ease-in-out infinite; }
+.anim-blink { animation: blinkdot 2.4s ease-in-out infinite; }
 .anim-fog { animation: fogdrift 18s ease-in-out infinite; }
-.anim-rise { animation: riseIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-rise { animation: riseIn 0.22s ease-out both; }
 .anim-spin-slow { animation: spinSlow 12s linear infinite; }
-
 .marquee-track { display: flex; width: max-content; animation: marquee 60s linear infinite; }
 
 .skeleton {
-  background: linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.03) 75%);
+  background: linear-gradient(90deg, rgba(16, 35, 63, 0.04) 25%, rgba(16, 35, 63, 0.08) 50%, rgba(16, 35, 63, 0.04) 75%);
   background-size: 400px 100%;
   animation: shimmer 1.5s infinite linear;
 }
 [data-theme="dark"] .skeleton {
-  background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.07) 50%, rgba(255, 255, 255, 0.03) 75%);
   background-size: 400px 100%;
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
 
-/* Consistent smooth interaction feel */
-button, a, select, input, textarea, [role="button"] {
-  transition: all 140ms ease-out;
-}
-button:active:not(:disabled) { transform: translateY(0.5px); }
+/* ---------- Interaction feel: calm, operational ---------- */
+button, a, select, input, textarea, [role="button"] { transition: background-color 120ms ease-out, border-color 120ms ease-out, color 120ms ease-out; }
 button:disabled { cursor: not-allowed; }
 
-:focus-visible {
-  outline: 2px solid rgba(29, 78, 216, 0.5);
-  outline-offset: 2px;
-  border-radius: 6px;
+.on-accent { color: var(--color-on-accent); }
+
+/* ---------- Control-room display canvas ---------- */
+/* The rail schematic and solver streams are dark by design: a wall-display
+   panel inside a light government shell. Everything else stays light. */
+.map-canvas {
+  /* Flat slate chart surface — schematic diagrams keep their own dark canvas in
+     both themes (railway-control convention), so no gradient is used here. */
+  background: #0f1c2e;
 }
-[data-theme="dark"] :focus-visible {
-  outline-color: rgba(59, 130, 246, 0.5);
+.code-panel {
+  background: #0b1424;
+  color: var(--color-mint);
 }
 
-/* ─── Theme toggle transitions ─── */
-html {
-  transition: background-color 0.2s ease, color 0.2s ease;
+/* ---------- Accessibility preferences (Portal Header → Accessibility) ---------- */
+html.rr-reduce-motion *,
+html.rr-reduce-motion *::before,
+html.rr-reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+}
+html.rr-large-text { font-size: 15.5px; }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Print: work orders / permits / reports ---------- */
+@media print {
+  .no-print, aside, header, nav, footer { display: none !important; }
+  body { background: #fff; color: #000; }
+  .panel { border-color: #999; box-shadow: none; break-inside: avoid; }
+  .gov-table thead th { background: #eee !important; }
 }

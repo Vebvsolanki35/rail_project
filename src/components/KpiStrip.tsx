@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowDownRight, Boxes, Gauge, ShieldCheck, Timer, Zap } from "lucide-react";
+import { AlarmClock, ArrowDownRight, Boxes, ClipboardCheck, Clock, Gauge, ShieldCheck, Timer, Zap } from "lucide-react";
 import type { DashboardState } from "@/lib/engine/types";
 
 function Card({
@@ -22,7 +22,7 @@ function Card({
       <div>
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">{label}</span>
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-hull border border-edge/60" style={{ color: tone }}>
+          <span className="flex h-7 w-7 items-center justify-center rounded-[3px] bg-hull border border-edge/60" style={{ color: tone }}>
             {icon}
           </span>
         </div>
@@ -37,7 +37,7 @@ function Card({
             {spark.map((h, i) => (
               <div
                 key={i}
-                className="flex-1 rounded-sm transition-all duration-300"
+                className="flex-1 rounded-[2px] transition-all duration-300"
                 style={{
                   height: `${Math.max(12, (h / Math.max(...spark, 1)) * 100)}%`,
                   backgroundColor: tone,
@@ -67,35 +67,35 @@ export default function KpiStrip({ state }: { state: DashboardState }) {
         value={hasPlan ? `${k.downtimeOptimizedH.toFixed(1)}h` : "—"}
         sub={hasPlan ? `vs ${k.downtimeBaselineH.toFixed(1)}h manual baseline` : "Run optimizer to calculate"}
         icon={<Timer size={14} />}
-        tone="#f59e0b"
+        tone="var(--color-saffron)"
       />
       <Card
         label="Downtime Reduction"
         value={hasPlan ? `${reduction}%` : "—"}
         sub="Single-corridor bundled occupancy"
         icon={<ArrowDownRight size={14} />}
-        tone="#10b981"
+        tone="var(--color-mint)"
       />
       <Card
         label="Super-Block Overlap"
         value={hasPlan ? `${k.bundlingPct}%` : "—"}
         sub="Multi-department shared minutes"
         icon={<Boxes size={14} />}
-        tone="#8b5cf6"
+        tone="var(--color-violet)"
       />
       <Card
         label="Avg Train Delay"
         value={hasPlan ? `${k.avgDelayMin.toFixed(1)}m` : "—"}
         sub="Target < 8 min · baseline 28+ min"
         icon={<Gauge size={14} />}
-        tone="#0ea5e9"
+        tone="var(--color-cyan)"
       />
       <Card
         label="Resilience Index"
         value={hasPlan ? `${k.resilienceScore}/100` : "—"}
         sub="500 Monte Carlo stress runs"
         icon={<ShieldCheck size={14} />}
-        tone="#10b981"
+        tone="var(--color-mint)"
         spark={state.latestPlan ? [0, 1, 2, 3, 4, 5, 6, 7].map((i) => state.latestPlan!.kpis[`h${i}`] ?? 0) : undefined}
       />
       <Card
@@ -103,7 +103,37 @@ export default function KpiStrip({ state }: { state: DashboardState }) {
         value={`${state.counts.openDefects}`}
         sub={`${state.counts.criticalDefects} critical · ${state.counts.assetsBelowHealth} degraded`}
         icon={<Zap size={14} />}
-        tone={state.counts.criticalDefects > 4 ? "#f43f5e" : "#f59e0b"}
+        tone={state.counts.criticalDefects > 4 ? "var(--color-signal)" : "var(--color-saffron)"}
+      />
+      {/* PS #26027 headline objective: availability maximised, downtime minimised */}
+      <Card
+        label="Asset Availability"
+        value={state.availability ? `${state.availability.optimizedPct.toFixed(1)}%` : "—"}
+        sub={
+          state.availability
+            ? `vs ${state.availability.baselinePct.toFixed(1)}% manual (+${state.availability.gainPts} pts)`
+            : "Run optimizer to calculate"
+        }
+        icon={<Clock size={14} />}
+        tone="var(--color-mint)"
+      />
+      <Card
+        label="Urgency Load"
+        value={`${state.urgency.emergency > 0 ? `${state.urgency.emergency}🔥` : state.urgency.overdue}`}
+        sub={
+          state.urgency.emergency > 0
+            ? `${state.urgency.emergency} emergency · ${state.urgency.overdue} overdue`
+            : `${state.urgency.overdue} overdue · avg index ${state.urgency.avgUrgency}`
+        }
+        icon={<AlarmClock size={14} />}
+        tone={state.urgency.emergency > 0 ? "var(--color-signal)" : "var(--color-saffron)"}
+      />
+      <Card
+        label="Lifecycle Open"
+        value={`${state.lifecycle.open}`}
+        sub={`${state.lifecycle.awaitingValidation} awaiting validation · ${state.lifecycle.chronic} chronic`}
+        icon={<ClipboardCheck size={14} />}
+        tone="var(--color-cyan)"
       />
     </div>
   );
