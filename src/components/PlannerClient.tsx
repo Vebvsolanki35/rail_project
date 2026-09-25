@@ -106,8 +106,6 @@ export default function PlannerClient({ initial }: { initial: DashboardState }) 
   const [week, setWeek] = useState(0);
   const [running, setRunning] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
-  const role = useRole();
-  const isDrm = role?.role === "DRM";
   const [mc, setMc] = useState<OptimizeResponse["monteCarlo"] | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
   const [defects, setDefects] = useState<DefectDTO[]>([]);

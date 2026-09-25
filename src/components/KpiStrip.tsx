@@ -135,36 +135,6 @@ export default function KpiStrip({ state }: { state: DashboardState }) {
         icon={<ClipboardCheck size={14} />}
         tone="var(--color-cyan)"
       />
-      {/* PS #26027 headline objective: availability maximised, downtime minimised */}
-      <Card
-        label="Asset Availability"
-        value={state.availability ? `${state.availability.optimizedPct.toFixed(1)}%` : "—"}
-        sub={
-          state.availability
-            ? `vs ${state.availability.baselinePct.toFixed(1)}% manual (+${state.availability.gainPts} pts)`
-            : "Run optimizer to calculate"
-        }
-        icon={<Clock size={14} />}
-        tone="#22c55e"
-      />
-      <Card
-        label="Urgency Load"
-        value={`${state.urgency.emergency > 0 ? `${state.urgency.emergency}🔥` : state.urgency.overdue}`}
-        sub={
-          state.urgency.emergency > 0
-            ? `${state.urgency.emergency} emergency · ${state.urgency.overdue} overdue`
-            : `${state.urgency.overdue} overdue · avg index ${state.urgency.avgUrgency}`
-        }
-        icon={<AlarmClock size={14} />}
-        tone={state.urgency.emergency > 0 ? "#ef4444" : "#f59e0b"}
-      />
-      <Card
-        label="Lifecycle Open"
-        value={`${state.lifecycle.open}`}
-        sub={`${state.lifecycle.awaitingValidation} awaiting validation · ${state.lifecycle.chronic} chronic`}
-        icon={<ClipboardCheck size={14} />}
-        tone="#38bdf8"
-      />
     </div>
   );
 }
