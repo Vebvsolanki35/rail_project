@@ -11,7 +11,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
   Activity,
   ArrowRight,
@@ -71,12 +70,6 @@ const QUICK_PICKS: { number: string; label: string }[] = [
   { number: "NB-101", label: "Namo Bharat RRTS" },
 ];
 
-const rise = (delay = 0) => ({
-  initial: { opacity: 0, y: 14 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-30px" },
-  transition: { duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] as const },
-});
 
 export default function TrainsClient() {
   const [mode, setMode] = useState<"number" | "name">("number");
@@ -154,61 +147,77 @@ export default function TrainsClient() {
 
   return (
     <div className="min-h-screen bg-abyss text-ink">
-      {/* ============ HEADER ============ */}
+      {/* ============ HEADER — public service chrome ============ */}
+      <div className="tricolor" aria-hidden />
+      <div className="border-b border-edge bg-primary on-accent">
+        <div className="mx-auto flex h-8 max-w-5xl items-center justify-between gap-3 px-4 sm:px-6">
+          <p className="truncate text-[11px] text-on-accent/90">
+            <span className="font-semibold">RAIL RAKSHAK</span>
+            <span className="mx-1.5 text-on-accent/40">·</span>
+            Passenger services — open to all, no sign-in
+          </p>
+          <span className="hidden text-[11px] text-on-accent/85 sm:block">Journey status &amp; maintenance impact</span>
+        </div>
+      </div>
+
       <header className="sticky top-0 z-30 border-b border-edge bg-hull">
-        <div className="tricolor" />
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
-              <TrainFront size={20} strokeWidth={2.2} />
+            <span className="flex h-10 w-10 items-center justify-center rounded-[3px] bg-primary on-accent">
+              <TrainFront size={21} strokeWidth={2.2} aria-hidden />
             </span>
             <span>
-              <span className="block text-sm font-bold tracking-tight text-ink">Rail Rakshak</span>
-              <span className="block text-[11px] font-medium text-dim">Citizen Train View</span>
+              <span className="block text-[15px] font-extrabold tracking-tight text-ink">RAIL RAKSHAK</span>
+              <span className="block text-[11px] font-medium text-dim">Citizen Train View — journey status &amp; maintenance impact</span>
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber/40 bg-amber/10 px-2.5 py-1 text-[10.5px] font-semibold text-amber">
-              <Info size={12} /> Prototype Data
+            <span className="inline-flex items-center gap-1.5 rounded-[3px] border border-amber/40 bg-amber/10 px-2 py-1 text-[10.5px] font-semibold text-amber">
+              <Info size={12} aria-hidden /> Prototype data
             </span>
-            <Link
-              href="/login"
-              className="hidden items-center gap-1.5 rounded-lg border border-edge bg-panel px-3 py-1.5 text-xs font-medium text-dim transition hover:text-ink sm:flex"
-            >
-              <Users size={13} /> Railway Staff
+            <Link href="/login" className="hidden items-center gap-1.5 rounded-[3px] border border-edge bg-panel px-2.5 py-1.5 text-[11.5px] font-medium text-dim hover:border-primary hover:text-primary sm:flex">
+              <Users size={13} aria-hidden /> Railway staff
             </Link>
           </div>
         </div>
+        <nav aria-label="Breadcrumb" className="crumb mx-auto max-w-5xl px-4 pb-1.5 sm:px-6">
+          <Link href="/">Portal home</Link>
+          <span className="flex items-center gap-2">
+            <span className="sep">›</span>
+            <span className="cur">Citizen Train View</span>
+          </span>
+        </nav>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 sm:px-6">
         {/* ============ SEARCH HERO ============ */}
         <section className="py-10 sm:py-14">
-          <motion.div {...rise(0)} className="text-center">
+          <div className="anim-rise text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3.5 py-1 text-xs font-semibold text-primary">
               <Sparkles size={13} /> For Passengers
             </span>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Rail Rakshak – Train Journey View
+            <h1 className="mx-auto mt-4 max-w-3xl border-b border-edge pb-2 text-[20px] font-bold tracking-tight text-ink sm:text-[22px]">
+              Passenger journey &amp; maintenance impact
             </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-dim sm:text-base">
-              Check your train journey and see how intelligent railway maintenance planning helps reduce disruption.
+            <p className="mx-auto mt-3 max-w-2xl text-[12.5px] leading-relaxed text-dim sm:text-[13.5px]">
+              Search a train by number or name to see where it is now, the expected delay and whether planned engineering work on the section affects
+              your journey. Impact levels — None, Low, Moderate or High — are derived from the same maintenance plan the control office works to.
             </p>
-          </motion.div>
+          </div>
 
           {/* Search card */}
-          <motion.div {...rise(0.08)} className="mx-auto mt-8 max-w-2xl">
-            <div className="rounded-2xl border border-edge bg-panel p-4 shadow-sm sm:p-5">
+          <div className="anim-rise mx-auto mt-8 max-w-2xl">
+            <div className="rounded-[4px] border border-edge bg-panel p-4 shadow-sm sm:p-5">
               {/* mode toggle */}
-              <div className="flex gap-1.5 rounded-xl border border-edge bg-abyss p-1" role="tablist" aria-label="Search mode">
+              <div className="flex gap-1.5 rounded-[4px] border border-edge bg-abyss p-1" role="tablist" aria-label="Search mode">
                 {(["number", "name"] as const).map((m) => (
                   <button
                     key={m}
                     role="tab"
                     aria-selected={mode === m}
                     onClick={() => setMode(m)}
-                    className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                      mode === m ? "bg-primary text-white shadow-sm" : "text-dim hover:text-ink"
+                    className={`flex-1 rounded-[3px] px-3 py-2 text-xs font-semibold transition ${
+                      mode === m ? "bg-primary on-accent shadow-sm" : "text-dim hover:text-ink"
                     }`}
                   >
                     {m === "number" ? "Search by Train Number" : "Search by Train Name"}
@@ -236,13 +245,13 @@ export default function TrainsClient() {
                     inputMode={mode === "number" ? "text" : "text"}
                     placeholder={mode === "number" ? "Enter train number (e.g. 12951)" : "Enter train name (e.g. Rajdhani, Vande Bharat)"}
                     aria-label="Train number or train name"
-                    className="w-full rounded-xl border border-edge bg-abyss py-3 pr-3 pl-10 text-sm text-ink outline-none placeholder:text-faint focus:border-primary/50"
+                    className="w-full rounded-[4px] border border-edge bg-abyss py-3 pr-3 pl-10 text-sm text-ink outline-none placeholder:text-faint focus:border-primary/50"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={busy}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded-[4px] bg-primary px-6 py-3 text-sm font-semibold on-accent shadow-sm transition hover:opacity-90 disabled:opacity-50"
                 >
                   {busy ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
                   Search
@@ -282,13 +291,13 @@ export default function TrainsClient() {
                     <li key={r.number}>
                       <button
                         onClick={() => pick(r.number)}
-                        className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${
+                        className={`flex w-full items-center gap-3 rounded-[4px] border p-3 text-left transition ${
                           selectedNumber === r.number
                             ? "border-primary/50 bg-primary/5"
                             : "border-edge bg-abyss hover:border-primary/30"
                         }`}
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[3px] bg-primary/10 text-primary">
                           <TrainFront size={16} />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -307,7 +316,7 @@ export default function TrainsClient() {
               )}
 
               {searched && results && results.length === 0 && (
-                <div className="mt-4 rounded-xl border border-edge bg-abyss p-4 text-center">
+                <div className="mt-4 rounded-[4px] border border-edge bg-abyss p-4 text-center">
                   <Search size={18} className="mx-auto text-faint" />
                   <p className="mt-2 text-sm font-semibold text-ink">No train found in the current prototype dataset.</p>
                   <p className="mt-1 text-xs text-dim">
@@ -322,7 +331,7 @@ export default function TrainsClient() {
                 </p>
               )}
             </div>
-          </motion.div>
+          </div>
         </section>
 
         {/* ============ TRAIN DETAIL ============ */}
@@ -335,8 +344,8 @@ export default function TrainsClient() {
             )}
 
             {/* ---- Status card ---- */}
-            <motion.div {...rise(0)} className="overflow-hidden rounded-2xl border border-edge bg-panel shadow-sm">
-              <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
+            <div className="anim-rise overflow-hidden rounded-[4px] border border-edge bg-panel shadow-sm">
+              <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
                 <div className="min-w-0">
                   <p className="font-mono text-xs font-semibold tracking-wider text-faint uppercase">
                     {KIND_LABELS[journey.train.kind] ?? journey.train.kind} · {journey.train.runsPerDay > 1 ? `${journey.train.runsPerDay} services/day` : "Daily service"}
@@ -407,9 +416,9 @@ export default function TrainsClient() {
                 <div className="mt-4 overflow-x-auto pb-1">
                   <div className="relative min-w-[560px] pb-2">
                     {/* track */}
-                    <div className="absolute top-[7px] right-2 left-2 h-0.5 rounded bg-edge" />
+                    <div className="absolute top-[7px] right-2 left-2 h-0.5 rounded-[2px] bg-edge" />
                     <div
-                      className="absolute top-[7px] left-2 h-0.5 rounded bg-primary transition-all"
+                      className="absolute top-[7px] left-2 h-0.5 rounded-[2px] bg-primary transition-all"
                       style={{ width: `calc((100% - 16px) * ${journey.journey.progressPct / 100})` }}
                     />
                     <div className="relative flex justify-between">
@@ -472,7 +481,7 @@ export default function TrainsClient() {
                       <span
                         className={`z-10 mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
                           s.state === "current"
-                            ? "border-primary bg-primary text-white"
+                            ? "border-primary bg-primary on-accent"
                             : s.state === "passed"
                               ? "border-primary/40 bg-primary/15 text-primary"
                               : "border-edge bg-panel text-faint"
@@ -503,10 +512,10 @@ export default function TrainsClient() {
                   ))}
                 </ol>
               </div>
-            </motion.div>
+            </div>
 
             {/* ---- Maintenance impact card ---- */}
-            <motion.div {...rise(0.05)} className="mt-6 overflow-hidden rounded-2xl border border-edge bg-panel shadow-sm">
+            <div className="anim-rise mt-6 overflow-hidden rounded-[4px] border border-edge bg-panel shadow-sm">
               <div className={`border-b px-5 py-4 sm:px-6 ${lv.banner}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-base font-bold text-ink">How Maintenance May Affect Your Journey</h3>
@@ -527,7 +536,7 @@ export default function TrainsClient() {
                 ) : (
                   <ul className="space-y-3">
                     {journey.impact.reasons.map((r, i) => (
-                      <li key={i} className="rounded-xl border border-edge bg-abyss p-3.5">
+                      <li key={i} className="rounded-[4px] border border-edge bg-abyss p-3.5">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="inline-flex items-center gap-1 rounded-full border border-edge bg-panel px-2 py-0.5 text-[10px] font-bold tracking-wide text-dim uppercase">
                             {r.kind === "active-work" ? <Wrench size={10} /> : r.kind === "safety-watch" ? <TriangleAlert size={10} /> : <CalendarClock size={10} />}
@@ -535,7 +544,7 @@ export default function TrainsClient() {
                           </span>
                           <span className="text-[11px] font-semibold text-ink">
                             {r.section}
-                            {r.isSuperBlock && <span className="ml-1.5 rounded bg-violet/10 px-1.5 py-0.5 text-[9.5px] font-bold text-violet">COMBINED WINDOW</span>}
+                            {r.isSuperBlock && <span className="ml-1.5 rounded-[2px] bg-violet/10 px-1.5 py-0.5 text-[9.5px] font-bold text-violet">COMBINED WINDOW</span>}
                           </span>
                           <span className="font-mono text-[11px] text-dim">
                             {r.when} · {r.windowLabel}
@@ -563,21 +572,21 @@ export default function TrainsClient() {
                   </ul>
                 )}
 
-                <div className="mt-5 rounded-xl border border-primary/25 bg-primary/5 p-4">
+                <div className="mt-5 rounded-[4px] border border-primary/25 bg-primary/5 p-4">
                   <p className="flex items-center gap-1.5 text-xs font-bold text-primary">
                     <Sparkles size={13} /> What Rail Rakshak is Doing
                   </p>
                   <p className="mt-1.5 text-xs leading-relaxed text-dim">{journey.impact.whatWeDo}</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* refresh + disclaimer */}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={() => selectedNumber && void loadJourney(selectedNumber)}
                 disabled={detailBusy}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-edge bg-panel px-3.5 py-2 text-xs font-semibold text-dim transition hover:text-ink disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-[3px] border border-edge bg-panel px-3.5 py-2 text-xs font-semibold text-dim transition hover:text-ink disabled:opacity-50"
               >
                 <RefreshCw size={13} className={detailBusy ? "animate-spin" : ""} /> Refresh status
               </button>
@@ -590,13 +599,13 @@ export default function TrainsClient() {
 
         {/* ============ WHY AI HELPS ============ */}
         <section className="border-t border-edge py-12">
-          <motion.div {...rise(0)} className="text-center">
+          <div className="anim-rise text-center">
             <h2 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">How AI Helps Reduce Disruption</h2>
             <p className="mx-auto mt-2 max-w-xl text-sm text-dim">
               Behind every smooth journey is careful coordination. Here is what the planning system does for you.
             </p>
-          </motion.div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          </div>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {[
               {
                 icon: Clock3,
@@ -619,28 +628,28 @@ export default function TrainsClient() {
                 text: "Efficient planning helps keep more railway infrastructure available for train operations.",
               },
             ].map((c, i) => (
-              <motion.div key={c.title} {...rise(0.06 * i)} className="rounded-2xl border border-edge bg-panel p-5">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+              <div key={c.title} className="anim-rise rounded-[4px] border border-edge bg-panel p-5">
+                <span className="flex h-10 w-10 items-center justify-center rounded-[4px] border border-primary/20 bg-primary/10 text-primary">
                   <c.icon size={18} />
                 </span>
                 <h3 className="mt-3.5 text-base font-bold text-ink">{c.title}</h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-dim">{c.text}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </section>
 
         {/* ============ RAIL RAKSHAK IMPACT (existing computed KPIs only) ============ */}
         <section className="border-t border-edge py-12">
-          <motion.div {...rise(0)} className="text-center">
+          <div className="anim-rise text-center">
             <h2 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">Rail Rakshak Impact</h2>
             <p className="mx-auto mt-2 max-w-xl text-sm text-dim">
               Measured by the system&apos;s own planning engine on the Delhi NCR demo grid.
             </p>
-          </motion.div>
+          </div>
 
           {journey?.kpis ? (
-            <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {[
                 { label: "Blocks Optimized", value: journey.kpis.blocksOptimized, sub: "in the latest plan" },
                 { label: "Maintenance Activities Coordinated", value: journey.kpis.activitiesCoordinated, sub: "defects cleared by the plan" },
@@ -654,18 +663,18 @@ export default function TrainsClient() {
                       : "vs manual baseline",
                 },
               ].map((m, i) => (
-                <motion.div key={m.label} {...rise(0.05 * i)} className="rounded-2xl border border-edge bg-panel p-4 text-center sm:p-5">
+                <div key={m.label} className="anim-rise rounded-[4px] border border-edge bg-panel p-4 text-center sm:p-5">
                   <p className="font-mono text-2xl font-bold text-primary sm:text-3xl">{m.value ?? "—"}</p>
                   <p className="mt-1.5 text-xs font-semibold text-ink">{m.label}</p>
                   <p className="mt-0.5 text-[10.5px] text-faint">{m.sub}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
           ) : (
-            <motion.p {...rise(0.05)} className="mx-auto mt-8 max-w-md rounded-2xl border border-edge bg-panel p-4 text-center text-xs text-dim">
+            <p className="anim-rise mx-auto mt-8 max-w-md rounded-[4px] border border-edge bg-panel p-4 text-center text-xs text-dim">
               Maintenance impact metrics will appear here once the operations team generates a maintenance plan in this
               prototype. No numbers are shown without a computed plan behind them.
-            </motion.p>
+            </p>
           )}
         </section>
       </main>

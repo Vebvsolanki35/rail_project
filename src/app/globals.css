@@ -1,177 +1,586 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   RAIL RAKSHAK — DESIGN SYSTEM  (rev. 2, institutional pass)
+
+   Visual brief: Indian Railway operations software — a government enterprise
+   control system, not a product landing page.
+
+   IDENTITY
+     · deep railway navy for structure and mastheads
+     · railway maroon (the colour of a railway board heading) as the ONLY accent
+     · white + cool light grey surfaces; hairlines, not shadows
+     · amber = attention, signal red = safety, green = operational, blue = info
+     · 2–3px radii, tabular figures, uppercase section heads, dense rows
+
+   The token NAMES from rev. 1 are kept, so every existing component inherits
+   the new identity without a logic change. New tokens are additive:
+       --color-maroon   secondary accent (railway board maroon)
+       --color-parch     tinted section surface
+   ========================================================================== */
+
+/* The portal's day/night switch drives `dark:` utilities (the switch sets
+   data-theme on <html>; without this variant Tailwind would follow the OS
+   preference instead of the in-app control). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
   --font-display: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* ─── Default = Light mode tokens ─── */
-  --color-abyss: #f3f4f6;
-  --color-hull: #ffffff;
-  --color-panel: #ffffff;
-  --color-edge: #d1d5db;
-  --color-ink: #1f2937;
-  --color-dim: #6b7280;
-  --color-faint: #9ca3af;
+  /* ─── Light = government portal (default) ─── */
+  --color-abyss: #e9edf2;   /* page background — cool grey */
+  --color-hull: #ffffff;    /* chrome: masthead, sidebar, header */
+  --color-panel: #ffffff;   /* content surfaces */
+  --color-parch: #f3f6f9;   /* tinted section surface (table heads, bands) */
+  --color-edge: #c6d0dc;    /* hairline border */
+  --color-edge-soft: #dde3ea;
+  --color-ink: #0e2138;     /* primary type — near-black navy */
+  --color-dim: #43536a;     /* secondary type */
+  --color-faint: #64748b;   /* metadata — 4.6:1 on white */
 
-  /* ─── Accent palette — Indian Railway inspired ─── */
-  --color-primary: #1d4ed8;
-  --color-amber: #b45309;
-  --color-saffron: #c2410c;
-  --color-signal: #dc2626;
-  --color-mint: #15803d;
-  --color-cyan: #0369a1;
-  --color-violet: #7c3aed;
+  /* ─── Functional palette ─── */
+  --color-primary: #123a6b;  /* railway navy — masthead, primary actions */
+  --color-maroon: #8a1a2b;   /* railway board maroon — the accent */
+  --color-amber: #9a5b00;    /* attention text */
+  --color-saffron: #9a5b00;  /* legacy alias — attention/warning, NOT an accent */
+  --color-signal: #a81c14;   /* safety / critical only */
+  --color-mint: #0f6b45;     /* operational success */
+  --color-cyan: #0f5a8f;     /* information */
+  --color-violet: #46428c;   /* advisory (AI decision support) */
+
+  /* Text placed on a filled surface (navy/maroon/signal/mint). */
+  --color-on-accent: #ffffff;
+
+  /* ─── Density & geometry ─── */
+  --radius-rail: 2px;
 }
 
-/* ─── Light Mode (default) ─── */
+/* ─── Light mode surface values ─── */
 html {
   background: var(--color-abyss);
   color-scheme: light;
-  scrollbar-color: #c4c8d0 #f3f4f6;
+  scrollbar-color: #aab6c4 #e9edf2;
 }
 
 body {
   background: var(--color-abyss);
   color: var(--color-ink);
   font-family: var(--font-display);
+  font-size: 13.5px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ─── Dark Mode Override ─── */
+/* ─── Night mode = control room ───
+   Kept for shift work, but day mode is the reference presentation. */
 [data-theme="dark"] {
-  --color-abyss: #1a1d23;
-  --color-hull: #22262e;
-  --color-panel: #2a2e36;
-  --color-edge: #3f434d;
-  --color-ink: #e5e7eb;
-  --color-dim: #9ca3af;
-  --color-faint: #6b7280;
-  --color-primary: #3b82f6;
-  --color-amber: #d97706;
-  --color-saffron: #ea580c;
-  --color-signal: #ef4444;
-  --color-mint: #22c55e;
-  --color-cyan: #0ea5e9;
-  --color-violet: #8b5cf6;
-
+  --color-abyss: #0b1626;
+  --color-hull: #101f33;
+  --color-panel: #14273d;
+  --color-parch: #17293f;
+  --color-edge: #24405c;
+  --color-edge-soft: #1c3550;
+  --color-ink: #e8eef7;
+  --color-dim: #a7b8cd;
+  --color-faint: #7d92aa;
+  --color-primary: #4b8fd6;
+  --color-maroon: #d4788a;
+  --color-amber: #e0a63a;
+  --color-saffron: #e0a63a;
+  --color-signal: #ef6a5a;
+  --color-mint: #43c59e;
+  --color-cyan: #58b6e8;
+  --color-violet: #8f9bd8;
+  --color-on-accent: #0b1626;
   color-scheme: dark;
-  scrollbar-color: #3f434d #1a1d23;
+  scrollbar-color: #24405c #0b1626;
 }
 
-/* ---------- Custom Scrollbars ---------- */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: var(--color-edge); border-radius: 6px; }
+/* ---------- Scrollbars ---------- */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: var(--color-edge); border-radius: 0; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-faint); }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* ---------- Indian Tricolor Stripe ---------- */
+/* ==========================================================================
+   TYPOGRAPHY SCALE — five levels, no marketing sizes
+   ========================================================================== */
+.t-page { font-size: 16.5px; font-weight: 700; letter-spacing: -0.011em; line-height: 1.25; color: var(--color-ink); }
+.t-section { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-primary); }
+.t-card { font-size: 12.5px; font-weight: 650; color: var(--color-ink); }
+.t-body { font-size: 12.5px; color: var(--color-ink); }
+.t-meta { font-size: 10.5px; color: var(--color-faint); letter-spacing: 0.02em; }
+.t-ref { font-family: var(--font-mono); font-size: 11px; letter-spacing: -0.01em; }
+
+/* ==========================================================================
+   INSTITUTIONAL RULES
+   ========================================================================== */
+
+/* Masthead base rule: navy field, maroon underline. Replaces the earlier
+   tricolour gradient — a government letterhead, not a flag graphic.
+   `.tricolor` is kept as the class name for compatibility. */
 .tricolor {
   height: 3px;
-  background: linear-gradient(90deg, #f97316 0 33.3%, #f8fafc 33.3% 66.6%, #16a34a 66.6% 100%);
+  background: linear-gradient(90deg, var(--color-maroon) 0 22%, var(--color-primary) 22% 100%);
 }
+.tricolor-thin { height: 2px; }
 
-/* ---------- Panels — Clean, Structured ---------- */
+/* Section rule with a maroon head — used as a department marker. */
+.dept-bar { border-left: 3px solid var(--color-maroon); padding-left: 10px; }
+
+.rule { height: 1px; background: var(--color-edge); border: 0; margin: 0; }
+.rule-soft { height: 1px; background: var(--color-edge-soft); border: 0; margin: 0; }
+
+/* ==========================================================================
+   PANELS — bordered sections, not floating cards
+   ========================================================================== */
 .panel {
   background: var(--color-panel);
   border: 1px solid var(--color-edge);
-  border-radius: 10px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-rail);
 }
-[data-theme="dark"] .panel {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
-}
+[data-theme="dark"] .panel { border-color: var(--color-edge); }
 
 .panel-hd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  min-height: 40px;
-  padding: 9px 16px;
+  gap: 10px;
+  min-height: 34px;
+  padding: 6px 11px;
+  background: var(--color-parch);
   border-bottom: 1px solid var(--color-edge);
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+[data-theme="dark"] .panel-hd { background: var(--color-parch); color: #bcd4f0; }
+
+.panel-bd { padding: 11px; }
+.sec-num { font-family: var(--font-mono); font-size: 10.5px; color: var(--color-faint); margin-right: 8px; }
+
+/* Panel header variant carrying a maroon marker bar. */
+.panel-hd-mark { position: relative; }
+.panel-hd-mark::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-maroon);
+}
+
+/* ==========================================================================
+   RAIL PRIMITIVES — shell, KPI, status strip, timeline, entity links
+   Consumed by components/rail/RailKit.tsx. Class names mirror the component
+   names in the brief (RailPanel → .rail-panel, RailKpiCard → .rail-kpi …).
+   ========================================================================== */
+
+/* ── Operational status strip (RailStatusBar) ── */
+.rail-strip {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  background: var(--color-panel);
+  border-bottom: 1px solid var(--color-edge);
+}
+.rail-strip-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 5px 14px;
+  border-right: 1px solid var(--color-edge-soft);
+}
+.rail-strip-cell:last-child { border-right: 0; }
+.rail-strip-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+  white-space: nowrap;
+}
+.rail-strip-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+.rail-strip-value.is-critical { color: var(--color-signal); }
+.rail-strip-value.is-warning { color: var(--color-amber); }
+.rail-strip-value.is-ok { color: var(--color-mint); }
+
+/* ── KPI card (RailKpiCard) — dense, clickable, no decoration ── */
+.rail-kpi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 74px;
+  padding: 9px 11px 9px 13px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-edge);
+  border-radius: var(--radius-rail);
+  text-align: left;
+}
+a.rail-kpi:hover, button.rail-kpi:hover { border-color: var(--color-primary); background: var(--color-parch); }
+/* Severity reads from a 3px marker on the left edge — colour without shouting. */
+.rail-kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--color-edge); }
+.rail-kpi[data-tone="critical"]::before { background: var(--color-signal); }
+.rail-kpi[data-tone="warning"]::before { background: var(--color-amber); }
+.rail-kpi[data-tone="success"]::before { background: var(--color-mint); }
+.rail-kpi[data-tone="info"]::before { background: var(--color-cyan); }
+.rail-kpi[data-tone="advisory"]::before { background: var(--color-violet); }
+.rail-kpi-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-dim);
 }
-
-.sec-num {
+.rail-kpi-value {
   font-family: var(--font-mono);
-  color: var(--color-faint);
-  margin-right: 8px;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+.rail-kpi[data-tone="critical"] .rail-kpi-value { color: var(--color-signal); }
+.rail-kpi-sub { font-size: 10.5px; line-height: 1.35; color: var(--color-faint); }
+.rail-kpi-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-primary);
 }
 
+/* ── Operational timeline (RailTimeline) ── */
+.rail-timeline { position: relative; }
+.rail-tl-row {
+  display: grid;
+  grid-template-columns: 58px 16px 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-edge-soft);
+}
+.rail-tl-row:last-child { border-bottom: 0; }
+.rail-tl-time { font-family: var(--font-mono); font-size: 11px; color: var(--color-faint); padding-top: 1px; }
+.rail-tl-axis { position: relative; display: flex; justify-content: center; }
+.rail-tl-axis::before { content: ""; position: absolute; top: 0; bottom: -12px; width: 1px; background: var(--color-edge); }
+.rail-tl-row:last-child .rail-tl-axis::before { display: none; }
+.rail-tl-dot {
+  position: relative;
+  z-index: 1;
+  margin-top: 3px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--color-panel);
+  background: var(--color-dim);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--color-edge);
+}
+.rail-tl-dot[data-tone="critical"] { background: var(--color-signal); }
+.rail-tl-dot[data-tone="warning"] { background: var(--color-amber); }
+.rail-tl-dot[data-tone="success"] { background: var(--color-mint); }
+.rail-tl-dot[data-tone="info"] { background: var(--color-cyan); }
+.rail-tl-dot[data-tone="advisory"] { background: var(--color-violet); }
+.rail-tl-body { min-width: 0; }
+.rail-tl-title { font-size: 12px; color: var(--color-ink); }
+.rail-tl-meta { margin-top: 1px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 10.5px; color: var(--color-faint); }
+
+/* ── Entity link chip (RailEntityLink): DEFECT-1024 → JOB-882 ── */
+.rail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 5px;
+  border: 1px solid var(--color-edge);
+  border-left-width: 3px;
+  border-left-color: var(--color-primary);
+  border-radius: var(--radius-rail);
+  background: var(--color-panel);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+.rail-link:hover { border-color: var(--color-primary); background: var(--color-parch); text-decoration: underline; }
+.rail-link[data-kind="defect"] { border-left-color: var(--color-signal); }
+.rail-link[data-kind="job"] { border-left-color: var(--color-cyan); }
+.rail-link[data-kind="block"] { border-left-color: var(--color-maroon); }
+.rail-link[data-kind="asset"] { border-left-color: var(--color-mint); }
+.rail-link[data-kind="plan"] { border-left-color: var(--color-primary); }
+.rail-link[data-kind="team"] { border-left-color: var(--color-amber); }
+/* Link chain: DEFECT → JOB → BLOCK … */
+.rail-chain { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.rail-chain-sep { color: var(--color-faint); font-size: 10px; }
+
+/* ── Alert row (RailAlert) ── */
+.rail-alert {
+  display: flex;
+  gap: 9px;
+  padding: 8px 11px;
+  border: 1px solid var(--color-edge);
+  border-left-width: 3px;
+  border-radius: var(--radius-rail);
+  background: var(--color-panel);
+}
+.rail-alert[data-tone="critical"] { border-left-color: var(--color-signal); background: color-mix(in srgb, var(--color-signal) 4%, var(--color-panel)); }
+.rail-alert[data-tone="warning"] { border-left-color: var(--color-amber); background: color-mix(in srgb, var(--color-amber) 5%, var(--color-panel)); }
+.rail-alert[data-tone="success"] { border-left-color: var(--color-mint); }
+.rail-alert[data-tone="info"] { border-left-color: var(--color-cyan); }
+.rail-alert[data-tone="advisory"] { border-left-color: var(--color-violet); }
+.rail-alert-hd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-dim);
+}
+.rail-alert-title { font-size: 12.5px; font-weight: 650; color: var(--color-ink); line-height: 1.3; }
+.rail-alert-meta { font-size: 10.5px; color: var(--color-faint); }
+
+/* ── Empty state (RailEmptyState) ── */
+.rail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 22px 14px;
+  text-align: center;
+  color: var(--color-faint);
+}
+.rail-empty-title { font-size: 12px; font-weight: 600; color: var(--color-dim); }
+
+/* ── Filter / layer bar (RailFilterBar) ── */
+.rail-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.rail-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--color-edge);
+  border-radius: var(--radius-rail);
+  background: var(--color-panel);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-dim);
+  cursor: pointer;
+}
+.rail-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.rail-chip[aria-pressed="true"] { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-accent); }
+.rail-chip-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ==========================================================================
+   BREADCRUMBS
+   ========================================================================== */
+.crumb { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 10.5px; color: var(--color-faint); }
+.crumb a:hover { color: var(--color-primary); text-decoration: underline; }
+.crumb .sep { color: var(--color-edge); }
+.crumb .cur { color: var(--color-dim); font-weight: 600; }
+
+/* ==========================================================================
+   GOVERNMENT DATA TABLES  (RailTable = .gov-table + .rail-table alias)
+   ========================================================================== */
+.rail-table, .gov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+.rail-table thead th, .gov-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 10px;
+  background: var(--color-parch);
+  border-top: 1px solid var(--color-edge);
+  border-bottom: 1px solid var(--color-edge);
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-dim);
+  white-space: nowrap;
+}
+.rail-table tbody td, .gov-table tbody td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-edge-soft);
+  vertical-align: middle;
+}
+.rail-table tbody tr:hover, .gov-table tbody tr:hover { background: color-mix(in srgb, var(--color-primary) 3.5%, transparent); }
+.rail-table tbody tr:last-child td, .gov-table tbody tr:last-child td { border-bottom: 0; }
+.rail-table tbody tr[data-selected="true"], .gov-table tbody tr[data-selected="true"] { background: color-mix(in srgb, var(--color-primary) 6%, transparent); }
+.gov-table .num, .rail-table .num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+.gov-table .sr, .rail-table .sr { width: 40px; color: var(--color-faint); font-family: var(--font-mono); }
+.gov-table .ref, .rail-table .ref { font-family: var(--font-mono); font-size: 10.5px; color: var(--color-primary); }
+.gov-table-wrap, .rail-table-wrap { overflow: auto; max-width: 100%; }
+
+/* ---------- Key/value metadata blocks ---------- */
+.kv { display: grid; grid-template-columns: minmax(92px, auto) 1fr; gap: 4px 12px; font-size: 11.5px; }
+.kv dt { color: var(--color-faint); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+.kv dd { color: var(--color-ink); font-weight: 500; }
+.kv-mono dd { font-family: var(--font-mono); }
+
+/* ==========================================================================
+   FORMAL ACTION BUTTONS
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--color-edge);
+  border-radius: var(--radius-rail);
+  background: var(--color-panel);
+  color: var(--color-ink);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+.btn:disabled { opacity: 0.55; }
+.btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-accent); }
+.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 88%, #000); color: var(--color-on-accent); border-color: transparent; }
+.btn-accent { background: var(--color-maroon); border-color: var(--color-maroon); color: var(--color-on-accent); }
+.btn-accent:hover:not(:disabled) { background: color-mix(in srgb, var(--color-maroon) 88%, #000); color: var(--color-on-accent); border-color: transparent; }
+.btn-danger { border-color: color-mix(in srgb, var(--color-signal) 55%, transparent); color: var(--color-signal); }
+.btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--color-signal) 10%, transparent); color: var(--color-signal); border-color: var(--color-signal); }
+.btn-sm { min-height: 25px; padding: 0 8px; font-size: 10.5px; }
+.btn-link { border-color: transparent; background: transparent; color: var(--color-primary); padding: 0 4px; min-height: 22px; }
+.btn-link:hover { text-decoration: underline; }
+
+/* ==========================================================================
+   FOCUS & ACCESSIBILITY
+   ========================================================================== */
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: 1px; }
+[data-theme="dark"] :focus-visible { outline-color: #7fb2e6; }
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 8px 14px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.skip-link:focus { left: 8px; top: 8px; }
+
+/* ---------- Operational grid backdrop (maps / diagrams) ---------- */
 .gridlines {
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(16, 35, 63, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 35, 63, 0.05) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 [data-theme="dark"] .gridlines {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
-/* ---------- Keyframes ---------- */
+/* ==========================================================================
+   MOTION — stability over decoration.
+   A status dot is a static filled dot; the only motion is a short fade-in for
+   panels that appear in response to a user action, and the solver animation
+   on the map (which represents real flow).
+   ========================================================================== */
 @keyframes dashflow { to { stroke-dashoffset: -120; } }
-@keyframes blinkdot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-@keyframes fogdrift {
-  0% { transform: translateX(-4%); }
-  50% { transform: translateX(4%); }
-  100% { transform: translateX(-4%); }
-}
-@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-@keyframes riseIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
+@keyframes riseIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
 @keyframes spinSlow { to { transform: rotate(360deg); } }
 
 .anim-flow { animation: dashflow 4s linear infinite; }
-.anim-blink { animation: blinkdot 2s ease-in-out infinite; }
-.anim-fog { animation: fogdrift 18s ease-in-out infinite; }
-.anim-rise { animation: riseIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-blink { animation: none; }              /* status dots no longer blink */
+.anim-fog { animation: none; }                /* fog is a static hatch overlay */
+.anim-rise { animation: riseIn 0.18s ease-out both; }
 .anim-spin-slow { animation: spinSlow 12s linear infinite; }
-
-.marquee-track { display: flex; width: max-content; animation: marquee 60s linear infinite; }
+.marquee-track { display: flex; width: max-content; animation: none; }
 
 .skeleton {
-  background: linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.03) 75%);
+  background: linear-gradient(90deg, rgba(16, 35, 63, 0.04) 25%, rgba(16, 35, 63, 0.08) 50%, rgba(16, 35, 63, 0.04) 75%);
   background-size: 400px 100%;
   animation: shimmer 1.5s infinite linear;
 }
 [data-theme="dark"] .skeleton {
-  background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.07) 50%, rgba(255, 255, 255, 0.03) 75%);
   background-size: 400px 100%;
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
 
-/* Consistent smooth interaction feel */
-button, a, select, input, textarea, [role="button"] {
-  transition: all 140ms ease-out;
-}
-button:active:not(:disabled) { transform: translateY(0.5px); }
+/* ---------- Interaction feel: calm, operational ---------- */
+button, a, select, input, textarea, [role="button"] { transition: background-color 110ms ease-out, border-color 110ms ease-out, color 110ms ease-out; }
 button:disabled { cursor: not-allowed; }
 
-:focus-visible {
-  outline: 2px solid rgba(29, 78, 216, 0.5);
-  outline-offset: 2px;
-  border-radius: 6px;
+.on-accent { color: var(--color-on-accent); }
+
+/* ---------- Control-room display canvas ---------- */
+/* The rail schematic keeps its own dark canvas in both themes: it is a wall
+   display panel inside a light government shell, and rail schematics are
+   conventionally drawn light-on-dark. Flat fill, no gradient. */
+.map-canvas { background: #0f1c2e; }
+.code-panel { background: #0b1424; color: var(--color-mint); }
+
+/* ---------- Accessibility preferences (Portal Header → Accessibility) ---------- */
+html.rr-reduce-motion *,
+html.rr-reduce-motion *::before,
+html.rr-reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
 }
-[data-theme="dark"] :focus-visible {
-  outline-color: rgba(59, 130, 246, 0.5);
+html.rr-large-text { font-size: 15.5px; }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
-/* ─── Theme toggle transitions ─── */
-html {
-  transition: background-color 0.2s ease, color 0.2s ease;
+/* ---------- Print: work orders / permits / reports ---------- */
+@media print {
+  .no-print, aside, header, nav, footer { display: none !important; }
+  body { background: #fff; color: #000; }
+  .panel { border-color: #999; break-inside: avoid; }
+  .gov-table thead th, .rail-table thead th { background: #eee !important; }
 }

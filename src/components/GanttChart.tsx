@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fmtMin, CORRIDOR_COLORS } from "@/lib/engine/network";
 import type { BlockItemDTO } from "@/lib/engine/types";
 
-const DEPT_FILL: Record<string, string> = { ENG: "#f59e0b", TRD: "#0ea5e9", SNT: "#8b5cf6" };
+const DEPT_FILL: Record<string, string> = { ENG: "var(--color-saffron)", TRD: "var(--color-cyan)", SNT: "var(--color-violet)" };
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 interface Props {
@@ -87,9 +87,9 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
     >
       <defs>
         <linearGradient id="supGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#f59e0b" />
-          <stop offset="50%" stopColor="#0ea5e9" />
-          <stop offset="100%" stopColor="#8b5cf6" />
+          <stop offset="0%" stopColor="var(--color-saffron)" />
+          <stop offset="50%" stopColor="var(--color-cyan)" />
+          <stop offset="100%" stopColor="var(--color-violet)" />
         </linearGradient>
       </defs>
 
@@ -101,7 +101,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
             y1={TOP - 10}
             x2={LABEL + (i / 7) * PLOT_W}
             y2={Math.max(H, 120) - 18}
-            stroke="#1e293b"
+            stroke="var(--color-edge)"
             strokeWidth="1"
           />
           {i < 7 && (
@@ -111,7 +111,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
               textAnchor="middle"
               fontSize="11"
               fontWeight="600"
-              fill="#94a3b8"
+              fill="var(--color-faint)"
               fontFamily="var(--font-display)"
             >
               {DAY_NAMES[i]} (Day {daysOffset + i + 1})
@@ -128,13 +128,13 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
           y={TOP - 8}
           width={((270 - 30) / (1440 * 7)) * PLOT_W}
           height={Math.max(H, 120) - TOP - 10}
-          fill="rgba(245, 158, 11, 0.04)"
+          fill="color-mix(in srgb, var(--color-saffron) 6%, transparent)"
           rx="4"
         />
       ))}
 
       {rows.length === 0 && (
-        <text x={W / 2} y={80} textAnchor="middle" fontSize="13" fill="#64748b" fontFamily="var(--font-display)">
+        <text x={W / 2} y={80} textAnchor="middle" fontSize="13" fill="var(--color-faint)" fontFamily="var(--font-display)">
           No scheduled blocks this week. Run the optimizer to generate a plan.
         </text>
       )}
@@ -150,7 +150,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
               textAnchor="end"
               fontSize="11"
               fontWeight="600"
-              fill={CORRIDOR_COLORS[corridor] ?? "#94a3b8"}
+              fill={CORRIDOR_COLORS[corridor] ?? "var(--color-faint)"}
               fontFamily="var(--font-mono)"
             >
               {code.replace("XR:", "")}
@@ -160,7 +160,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
               y1={TOP + ri * ROW_H + 14}
               x2={W - 16}
               y2={TOP + ri * ROW_H + 14}
-              stroke="#172033"
+              stroke="var(--color-edge)"
               strokeWidth="1"
             />
             {rowBlocks.map((b) => {
@@ -180,7 +180,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
                       height={ROW_H - 8}
                       rx="7"
                       fill="none"
-                      stroke="#f1f5f9"
+                      stroke="var(--color-ink)"
                       strokeWidth="1.5"
                       strokeDasharray="3 3"
                     />
@@ -191,9 +191,9 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
                     width={bw}
                     height={ROW_H - 14}
                     rx="6"
-                    fill={b.isSuperBlock ? "url(#supGrad)" : (DEPT_FILL[b.departments[0]] ?? "#64748b")}
+                    fill={b.isSuperBlock ? "url(#supGrad)" : (DEPT_FILL[b.departments[0]] ?? "var(--color-faint)")}
                     opacity={dragging ? 0.6 : b.mode === "virtual" ? 0.5 : 0.95}
-                    stroke={selected || dragging ? "#fff" : "rgba(10, 14, 23, 0.8)"}
+                    stroke={selected || dragging ? "var(--color-on-accent)" : "color-mix(in srgb, var(--color-ink) 55%, transparent)"}
                     strokeWidth={dragging ? 1.5 : 1}
                     onClick={() => !dragging && onSelect?.(b.id)}
                   />
@@ -202,7 +202,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
                       x={bx + 6}
                       y={TOP + ri * ROW_H + 18}
                       fontSize="9.5"
-                      fill="#0a0e17"
+                      fill="var(--color-on-accent)"
                       fontWeight="700"
                       fontFamily="var(--font-display)"
                       pointerEvents="none"
@@ -216,7 +216,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
                       y={TOP + ri * ROW_H - 3}
                       textAnchor="middle"
                       fontSize="10"
-                      fill="#f59e0b"
+                      fill="var(--color-saffron)"
                       fontWeight="700"
                       fontFamily="var(--font-mono)"
                     >
@@ -231,7 +231,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
                         width="7"
                         height={ROW_H - 14}
                         rx="3"
-                        fill="#f1f5f9"
+                        fill="var(--color-on-accent)"
                         opacity="0.6"
                         style={{ cursor: "ew-resize" }}
                         onPointerDown={(e) => beginDrag(e, b, "l")}
@@ -242,7 +242,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
                         width="7"
                         height={ROW_H - 14}
                         rx="3"
-                        fill="#f1f5f9"
+                        fill="var(--color-on-accent)"
                         opacity="0.6"
                         style={{ cursor: "ew-resize" }}
                         onPointerDown={(e) => beginDrag(e, b, "r")}
@@ -259,7 +259,7 @@ export default function GanttChart({ blocks, week, selectedId, onSelect, onResiz
         );
       })}
 
-      <text x={LABEL} y={Math.max(H, 120) - 4} fontSize="9.5" fill="#64748b" fontFamily="var(--font-display)">
+      <text x={LABEL} y={Math.max(H, 120) - 4} fontSize="9.5" fill="var(--color-faint)" fontFamily="var(--font-display)">
         {onResize
           ? "Drag block handles to resize window · delay impact recalculates instantly · click a block to view its safety order"
           : "Golden maintenance window 00:30–04:30 · click any block to view its generated safety work order"}

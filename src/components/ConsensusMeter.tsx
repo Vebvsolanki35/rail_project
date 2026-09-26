@@ -27,7 +27,7 @@ export default function ConsensusMeter({ segments }: { segments: SegmentDTO[] })
   const pct = data?.agreementPct ?? 0;
   const R = 50;
   const C = 2 * Math.PI * R;
-  const color = !data ? "#475569" : data.decision === "APPROVED" ? "#10b981" : "#f59e0b";
+  const color = !data ? "var(--color-faint)" : data.decision === "APPROVED" ? "var(--color-mint)" : "var(--color-saffron)";
 
   return (
     <div className="flex h-full flex-col justify-between p-3.5 space-y-3">
@@ -38,7 +38,7 @@ export default function ConsensusMeter({ segments }: { segments: SegmentDTO[] })
             setSegmentId(Number(e.target.value));
             run(Number(e.target.value));
           }}
-          className="w-full rounded-xl border border-edge bg-hull px-3 py-1.5 text-xs font-medium text-ink outline-none"
+          className="w-full rounded-[4px] border border-edge bg-hull px-3 py-1.5 text-xs font-medium text-ink outline-none"
         >
           {segments.map((s) => (
             <option key={s.id} value={s.id}>
@@ -49,17 +49,17 @@ export default function ConsensusMeter({ segments }: { segments: SegmentDTO[] })
         <button
           onClick={() => run(segmentId)}
           disabled={loading}
-          className="flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 px-3 py-1.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/25 transition disabled:opacity-50"
+          className="flex shrink-0 items-center gap-1 rounded-[4px] bg-mint/15 border border-mint/30 px-3 py-1.5 text-xs font-semibold text-mint hover:bg-mint/25 transition disabled:opacity-50"
         >
           {loading ? <Loader2 size={12} className="animate-spin" /> : <Fingerprint size={12} />}
           Vote
         </button>
       </div>
 
-      <div className="flex flex-1 items-center gap-4 py-1">
+      <div className="flex flex-1 items-center gap-3 py-1">
         <div className="relative h-28 w-28 shrink-0">
           <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-            <circle cx="60" cy="60" r={R} fill="none" stroke="#1e293b" strokeWidth="8" />
+            <circle cx="60" cy="60" r={R} fill="none" stroke="var(--color-edge)" strokeWidth="8" />
             <circle
               cx="60"
               cy="60"
@@ -109,14 +109,14 @@ export default function ConsensusMeter({ segments }: { segments: SegmentDTO[] })
       </div>
 
       {data && (
-        <div className="rounded-xl border border-edge bg-hull/60 p-3 text-xs">
+        <div className="rounded-[4px] border border-edge bg-hull/60 p-3 text-xs">
           <div className="mb-1 flex items-center justify-between">
             <span className="font-semibold text-dim">LLM Root-Cause Analysis:</span>
             <span
               className="rounded-full px-2 py-0.5 text-[10px] font-bold"
               style={{
                 backgroundColor: data.decision === "APPROVED" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)",
-                color: data.decision === "APPROVED" ? "#10b981" : "#f59e0b",
+                color: data.decision === "APPROVED" ? "var(--color-mint)" : "var(--color-saffron)",
               }}
             >
               {data.decision}

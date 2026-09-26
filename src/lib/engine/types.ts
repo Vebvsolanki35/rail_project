@@ -1,4 +1,5 @@
 /** Client-safe DTOs shared between API routes and UI components. */
+import type { UrgencyQueueItem } from "./urgency";
 
 export type Department = "ENG" | "TRD" | "SNT";
 
@@ -46,8 +47,11 @@ export interface SegmentDTO {
 
 export interface DefectDTO {
   id: number;
+  /** Stable human reference — DEF-<SECTION>-<YEAR>-<SEQ>. */
+  defectCode: string;
   segmentId: number;
   segmentCode: string;
+  corridor: string;
   department: Department;
   sourceSystem: string;
   title: string;
@@ -58,6 +62,27 @@ export interface DefectDTO {
   failureProb72h: number;
   status: string;
   aiScore: number;
+  /* ---- Smart Defect Lifecycle ---- */
+  lifecycleStatus: string;
+  lifecycleLabel: string;
+  stageIndex: number;
+  happening: string;
+  next: string;
+  responsible: string;
+  nextAction: string | null;
+  priority: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  dueInDays: number;
+  recurrenceBand: string;
+  occurrences: number;
+  detailedInspection: boolean;
+  /* ---- Urgency engine ---- */
+  urgencyClass: string;
+  urgencyScore: number;
+  boost: number;
+  /** aiScore × urgencyBoost — the optimizer's ordering key. */
+  sortKey: number;
+  /** Rule-based recurrence escalations are always labelled as such. */
+  escalatedByRecurrence: boolean;
 }
 
 export interface BlockItemDTO {
@@ -69,11 +94,17 @@ export interface BlockItemDTO {
   startMin: number;
   endMin: number;
   departments: string[];
+  /** Ids of the defects bundled into this occupancy (order = priority order). */
+  defectIds?: number[];
   defectCount: number;
   isSuperBlock: boolean;
   mode: string;
   window: string;
   delayCostMin: number;
+  /** Why the optimizer chose this window — rendered by BlockExplain. */
+  rationale?: string;
+  /** proposed | frozen (crew on site) | superseded (replaced by a re-plan) */
+  status?: string;
 }
 
 export interface PlanDTO {
@@ -84,6 +115,10 @@ export interface PlanDTO {
   resilienceScore: number;
   kpis: Record<string, number>;
   blocks: BlockItemDTO[];
+  /* ---- Dynamic re-planning lineage (plans.supersedesId / triggerNote / diff) ---- */
+  supersedesId?: number | null;
+  triggerNote?: string | null;
+  diff?: { added: string[]; removed: string[]; moved: string[]; frozen: string[]; note: string } | null;
 }
 
 export interface EventDTO {
@@ -157,6 +192,64 @@ export interface DashboardState {
     conflictsAvoided: number;
   };
   weather: { tempC: number; visibilityM: number; humidityPct: number; fogRisk: string };
+  /* ---- PS #26027 additions ---- */
+  lifecycle: {
+    counts: Record<string, number>;
+    open: number;
+    closed: number;
+    overdue: number;
+    emergency: number;
+    awaitingValidation: number;
+    chronic: number;
+    detailedInspections: number;
+    avgAgeDaysOpen: number;
+  };
+  urgency: {
+    total: number;
+    counts: Record<string, number>;
+    emergency: number;
+    overdue: number;
+    /** Same fields the engine's urgencySummary() exposes, for the shared panel. */
+    emergencyCount: number;
+    overdueCount: number;
+    avgUrgency: number;
+    top: UrgencyQueueItem | null;
+  };
+  /** Top of the prioritisation queue, ready for the command-centre panel. */
+  urgencyQueue: UrgencyQueueItem[];
+  availability: {
+    optimizedPct: number;
+    baselinePct: number;
+    gainPts: number;
+    monitoredAssets: number;
+    optimizedDowntimeH: number;
+    baselineDowntimeH: number;
+    horizon: string;
+  } | null;
+  superBlocks: {
+    opportunities: number;
+    recommended: number;
+    potentialSavingH: number;
+    plannedSuperBlocks: number;
+    coordinationH: number;
+    splitFindings: number;
+    topSegmentCode: string | null;
+    topSavingMin: number;
+    topDecision: string | null;
+  } | null;
+  replanning: {
+    versions: number;
+    replans: number;
+    latestTrigger: string | null;
+    latestDiff: { added: string[]; removed: string[]; moved: string[]; frozen: string[]; note: string } | null;
+  };
+  /** Latest plan quality score (quality.ts) — null until a plan exists. */
+  planQuality: {
+    score: number;
+    items: { key: string; label: string; pct: number; display: string; weight: number; note: string }[];
+    /** Plan vs the manual/pre-Rail-Rakshak baseline (null when unmeasurable). */
+    vsManual: { downtimePct: number | null; availabilityPts: number | null } | null;
+  } | null;
   modelCard: {
     algorithm: string;
     trainedOn: number;

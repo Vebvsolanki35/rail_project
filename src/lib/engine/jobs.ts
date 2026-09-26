@@ -2,7 +2,12 @@ import { db } from "@/db";
 import { defects, events, jobs, segments } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { FIELD_PHOTOS, SEGMENTS } from "./network";
+import { onJobAllotted, onJobCompleted, onJobStarted, onJobValidated } from "./defectlifecycle";
 import type { JobDTO, JobStatus } from "./types";
+
+/* Field actors used for the Smart Defect Lifecycle audit trail. */
+const INSPECTOR_ACTOR = { name: "Insp. S. Sharma (SSE/P.Way, NDLS-I)", role: "INSPECTOR" };
+const karmiActor = (teamLeader: string | null) => ({ name: teamLeader ?? "Karmi crew", role: "KARMI" });
 
 function escalationLevel(j: typeof jobs.$inferSelect): number {
   if (j.status !== "ALLOTTED") return 0;
@@ -108,6 +113,8 @@ export async function allotJob(input: { jobId: number; teamLeader: string; windo
     })
     .where(eq(jobs.id, input.jobId));
   await event("info", `Inspector allotted job #${input.jobId} (${seg?.code}) to ${input.teamLeader} — golden window ${String(Math.floor(input.windowStart / 60)).padStart(2, "0")}:${String(input.windowStart % 60).padStart(2, "0")}`);
+  // Smart Defect Lifecycle: the linked defect advances to WORK ASSIGNED.
+  await onJobAllotted(input.jobId, INSPECTOR_ACTOR, `work allotted to ${input.teamLeader}`);
 }
 
 /** Step 2 — karmi starts work, BEFORE photo + GPS. */
@@ -127,6 +134,8 @@ export async function startJob(input: { jobId: number; photoData?: string }) {
     })
     .where(eq(jobs.id, input.jobId));
   await event("critical", `BLOCK OCCUPIED: ${seg?.code} — ${job.teamLeader?.split(" — ")[0] ?? "crew"} on site, BEFORE photo GPS-verified. Section RED on corridor board.`);
+  // Smart Defect Lifecycle: crew on site → WORK IN PROGRESS.
+  await onJobStarted(input.jobId, karmiActor(job.teamLeader), "crew on site, BEFORE photo GPS-verified");
 }
 
 /** Step 3 — karmi completes work, AFTER photo + GPS. */
@@ -146,6 +155,8 @@ export async function completeJob(input: { jobId: number; photoData?: string }) 
     })
     .where(eq(jobs.id, input.jobId));
   await event("info", `Job #${input.jobId} (${seg?.code}) submitted for review — BEFORE/AFTER photo set with GPS metadata`);
+  // Smart Defect Lifecycle: work done, inspector validation pending.
+  await onJobCompleted(input.jobId, karmiActor(job.teamLeader), "work completed, submitted for validation");
 }
 
 /** Step 4 — inspector reviews: accept → block released; reject → back to ALLOTTED. */
@@ -154,6 +165,8 @@ export async function reviewJob(input: { jobId: number; accept: boolean; reason?
   if (!job) throw new Error("job not found");
   const [seg] = await db.select().from(segments).where(eq(segments.id, job.segmentId));
   if (input.accept) {
+    // Smart Defect Lifecycle: inspector validation closes the defect.
+    await onJobValidated(input.jobId, true, INSPECTOR_ACTOR, input.reason ?? "work validated on site");
     await db.update(jobs).set({ status: "COMPLETED", reviewNote: input.reason ?? "Accepted — work verified.", updatedAt: new Date() }).where(eq(jobs.id, input.jobId));
     // close matching defect if linked
     if (job.defectId) {
@@ -168,6 +181,8 @@ export async function reviewJob(input: { jobId: number; accept: boolean; reason?
         : `BLOCK RELEASED: ${seg?.code} turned GREEN on corridor board — Inspector sign-off #RR/SO/${job.id}, trains resume with 12952 first through`
     );
   } else {
+    // Clearly-labelled correction edge: AWAITING VALIDATION → WORK ASSIGNED (rework).
+    await onJobValidated(input.jobId, false, INSPECTOR_ACTOR, input.reason ?? "quality not satisfactory — rework required");
     await db.update(jobs).set({ status: "ALLOTTED", reviewNote: input.reason ?? "Rejected", afterPhoto: null, afterAt: null, updatedAt: new Date() }).where(eq(jobs.id, input.jobId));
     await event("warn", `Inspector REJECTED job #${job.id} (${seg?.code}): ${input.reason ?? "quality not satisfactory"} — re-allotted to ${job.teamLeader}`);
   }
@@ -213,7 +228,20 @@ export async function extendJob(input: { jobId: number; addMin: number }) {
 }
 
 /** DRM strategic override (logged to RLHF pipeline). */
-export async function setPlanStatus(mode: "PROPOSED" | "APPROVED" | "VETOED", reason?: string, note?: string) {
+/**
+ * Record the divisional decision on the plan.
+ *
+ * `actor` is optional so the planner's "submit for approval" step can return the
+ * plan to PROPOSED without claiming a human decision, but APPROVED and VETOED
+ * always carry the officer's name into the immutable audit trail — the veto is
+ * the DRM overriding the machine, and that must be attributable.
+ */
+export async function setPlanStatus(
+  mode: "PROPOSED" | "APPROVED" | "VETOED",
+  reason?: string,
+  note?: string,
+  actor?: { name: string; role: string }
+) {
   await db
     .insert(events)
     .values({
@@ -222,12 +250,26 @@ export async function setPlanStatus(mode: "PROPOSED" | "APPROVED" | "VETOED", re
         mode === "VETOED"
           ? `DRM HUMAN VETO invoked — Reason: ${reason ?? "Human Judgement"}${note ? ` — Note: ${note}` : ""} — recorded in the DRM override audit trail (RLHF candidate set)`
           : mode === "APPROVED"
-            ? "Weekly plan APPROVED by DRM — published to COA, NTES & SIMRAN with digital signature"
-            : "Plan returned to AI proposal state",
+            ? `Weekly plan APPROVED by DRM${actor ? ` (${actor.name})` : ""} — released to the section controllers' distribution list for implementation; every block still needs its own written authority (SIMULATION: no live NTES/SIMRAN/CMS feed is connected)`
+            : "Plan returned to AI proposal state — awaiting a recorded divisional decision",
     });
   const { settings } = await import("@/db/schema");
   await db
     .insert(settings)
     .values({ key: "planStatus", value: mode })
     .onConflictDoUpdate({ target: settings.key, set: { value: mode } });
+
+  if (mode !== "PROPOSED") {
+    const { recordAudit } = await import("./audittrail");
+    await recordAudit({
+      actorName: actor?.name ?? "Divisional control",
+      actorRole: actor?.role ?? "DRM",
+      action: mode === "VETOED" ? "VETOED" : "APPROVED",
+      entity: "PLAN",
+      entityRef: "planStatus",
+      newValue: { planStatus: mode },
+      reason: reason ?? (mode === "VETOED" ? "DRM overrode the AI recommendation" : "Plan approved by DRM"),
+      severity: mode === "VETOED" ? "critical" : "info",
+    });
+  }
 }

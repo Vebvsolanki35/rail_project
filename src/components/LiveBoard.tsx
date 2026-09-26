@@ -26,7 +26,7 @@ export default function LiveBoard({ trains }: { trains: LiveTrainDTO[] }) {
       {sorted.map((t, i) => {
         const col = KIND_COLOR[t.kind] ?? "#94a3b8";
         return (
-          <div key={t.number + i} className="flex items-center gap-3 p-3 hover:bg-white/[0.02] transition">
+          <div key={t.number + i} className="flex items-center gap-3 p-3 hover:bg-primary/[0.03] transition">
             <span className="font-mono text-xs font-bold shrink-0" style={{ color: col }}>
               {t.number}
             </span>
@@ -39,19 +39,19 @@ export default function LiveBoard({ trains }: { trains: LiveTrainDTO[] }) {
             <div className="shrink-0 text-right">
               {t.status === "RUNNING" ? (
                 <>
-                  <p className="text-xs font-bold text-emerald-400 font-mono">
+                  <p className="text-xs font-bold text-mint font-mono">
                     @{t.segCode?.replace("XR:", "")} → {t.nextStation}
                   </p>
-                  <p className={`text-[10.5px] font-mono ${t.delayMin > 8 ? "text-rose-400 font-semibold" : "text-dim"}`}>
+                  <p className={`text-[10.5px] font-mono ${t.delayMin > 8 ? "text-signal font-semibold" : "text-dim"}`}>
                     {t.delayMin === 0 ? "Right Time" : `+${t.delayMin}m delay`} · {t.progressPct}%
                   </p>
                 </>
               ) : t.status === "SCHEDULED" ? (
-                <span className="rounded bg-panel px-2 py-0.5 text-[10px] font-semibold text-dim border border-edge">
+                <span className="rounded-[2px] bg-panel px-2 py-0.5 text-[10px] font-semibold text-dim border border-edge">
                   Scheduled
                 </span>
               ) : (
-                <span className="rounded bg-panel px-2 py-0.5 text-[10px] text-faint">
+                <span className="rounded-[2px] bg-panel px-2 py-0.5 text-[10px] text-faint">
                   Arrived
                 </span>
               )}

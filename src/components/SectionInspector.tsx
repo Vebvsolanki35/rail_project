@@ -26,19 +26,19 @@ export default function SectionInspector({ segment }: { segment: SegmentDTO | nu
   }
 
   const meta = sectionMeta(segment.code);
-  const color = CORRIDOR_COLORS[segment.corridor] ?? "#64748b";
+  const color = CORRIDOR_COLORS[segment.corridor] ?? "var(--color-faint)";
   const segDefects = defects.filter((d) => d.segmentId === segment.id && d.status !== "closed");
 
   return (
     <div className="anim-rise space-y-3 p-4">
       <div>
         <div className="flex items-center gap-2">
-          <span className="rounded-lg px-2.5 py-0.5 font-mono text-xs font-bold" style={{ backgroundColor: `${color}20`, color }}>
+          <span className="rounded-[3px] px-2.5 py-0.5 font-mono text-xs font-bold" style={{ backgroundColor: `${color}20`, color }}>
             {segment.code}
           </span>
           <span className="text-xs font-semibold text-dim">{segment.corridor} Corridor</span>
           {segment.isBridge && (
-            <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.2 text-[10px] font-bold text-amber-400">
+            <span className="rounded-full bg-saffron/15 border border-saffron/30 px-2 py-0.2 text-[10px] font-bold text-saffron">
               Yamuna Bridge
             </span>
           )}
@@ -64,7 +64,7 @@ export default function SectionInspector({ segment }: { segment: SegmentDTO | nu
         ))}
       </div>
 
-      <div className="rounded-xl border border-edge bg-hull/60 p-3 text-xs">
+      <div className="rounded-[4px] border border-edge bg-hull/60 p-3 text-xs">
         <p className="font-medium text-dim">Jurisdiction: <span className="text-ink">{meta?.jurisdiction}</span></p>
         <p className="mt-0.5 text-faint">Speed Restriction: {meta?.tsr}</p>
       </div>
@@ -72,19 +72,19 @@ export default function SectionInspector({ segment }: { segment: SegmentDTO | nu
       <div>
         <div className="flex items-center justify-between text-xs font-semibold text-dim mb-1.5">
           <span>Open Defects on Section</span>
-          <span className="font-mono text-amber-400">{segDefects.length}</span>
+          <span className="font-mono text-saffron">{segDefects.length}</span>
         </div>
         <div className="max-h-32 space-y-1.5 overflow-y-auto pr-1">
           {segDefects.length === 0 && (
-            <p className="py-2 text-xs text-emerald-400">Section clear — no active open defects reported.</p>
+            <p className="py-2 text-xs text-mint">Section clear — no active open defects reported.</p>
           )}
           {segDefects.map((d) => (
-            <div key={d.id} className="flex items-center gap-2 rounded-lg bg-hull/80 border border-edge/60 px-2.5 py-1.5 text-xs">
+            <div key={d.id} className="flex items-center gap-2 rounded-[3px] bg-hull/80 border border-edge/60 px-2.5 py-1.5 text-xs">
               <span
-                className="font-mono font-bold text-[10px] rounded px-1"
+                className="font-mono font-bold text-[10px] rounded-[2px] px-1"
                 style={{
-                  backgroundColor: d.aiScore > 70 ? "rgba(244,63,94,0.15)" : "rgba(245,158,11,0.15)",
-                  color: d.aiScore > 70 ? "#fb7185" : "#f59e0b",
+                  backgroundColor: d.aiScore > 70 ? "color-mix(in srgb, var(--color-signal) 15%, transparent)" : "color-mix(in srgb, var(--color-saffron) 15%, transparent)",
+                  color: d.aiScore > 70 ? "var(--color-signal)" : "var(--color-saffron)",
                 }}
               >
                 {d.aiScore.toFixed(0)}

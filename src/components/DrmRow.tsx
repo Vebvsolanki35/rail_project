@@ -16,14 +16,14 @@ export default function DrmRow({ state }: { state: DashboardState }) {
   const health = hasPlan
     ? Math.round(0.32 * k.resilienceScore + 0.26 * delayScore + 0.2 * k.bundlingPct + 0.22 * criticalScore)
     : Math.round(0.55 * criticalScore + 45 * 0.45);
-  const hColor = health >= 80 ? "#10b981" : health >= 50 ? "#f59e0b" : "#f43f5e";
+  const hColor = health >= 80 ? "var(--color-mint)" : health >= 50 ? "var(--color-saffron)" : "var(--color-signal)";
   const hLabel = health >= 80 ? "STABLE" : health >= 50 ? "WATCH" : "CRITICAL";
 
   const approvals = state.events.filter((e) => e.message.includes("APPROVED by DRM")).length;
   const vetoes = state.events.filter((e) => e.message.includes("HUMAN VETO")).length;
   const totalDecisions = Math.max(approvals + vetoes, 0);
   const trust = totalDecisions > 0 ? Math.round((approvals / (approvals + vetoes || 1)) * 100) : 88;
-  const trustColor = trust >= 75 ? "#10b981" : trust >= 50 ? "#f59e0b" : "#f43f5e";
+  const trustColor = trust >= 75 ? "var(--color-mint)" : trust >= 50 ? "var(--color-saffron)" : "var(--color-signal)";
 
   const savedH = Math.max(k.downtimeBaselineH - k.downtimeOptimizedH, 0);
   const monthlyCr = ((savedH * 4.3 * 66000 + k.bundlingPct * 1400) / 1e7).toFixed(1);
@@ -36,10 +36,10 @@ export default function DrmRow({ state }: { state: DashboardState }) {
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
       {/* Network Health Index */}
-      <div className="panel flex items-center gap-4 p-4">
+      <div className="panel flex items-center gap-3 p-4">
         <div className="relative h-24 w-24 shrink-0">
           <svg viewBox="0 0 110 110" className="h-full w-full -rotate-90">
-            <circle cx="55" cy="55" r={R} fill="none" stroke="#1e293b" strokeWidth="8" />
+            <circle cx="55" cy="55" r={R} fill="none" stroke="var(--color-edge)" strokeWidth="8" />
             <circle
               cx="55"
               cy="55"
@@ -66,17 +66,17 @@ export default function DrmRow({ state }: { state: DashboardState }) {
             Composite score derived from network resilience, delay minimization, and defect containment.
           </p>
           <div className="mt-2 flex gap-1.5 font-mono text-[10px] text-faint">
-            <span className="rounded bg-hull px-1.5 py-0.5 border border-edge">σ {k.resilienceScore || "—"}</span>
-            <span className="rounded bg-hull px-1.5 py-0.5 border border-edge">delay {k.avgDelayMin || "—"}m</span>
+            <span className="rounded-[2px] bg-hull px-1.5 py-0.5 border border-edge">σ {k.resilienceScore || "—"}</span>
+            <span className="rounded-[2px] bg-hull px-1.5 py-0.5 border border-edge">delay {k.avgDelayMin || "—"}m</span>
           </div>
         </div>
       </div>
 
       {/* Trust & Override Index */}
-      <div className="panel flex items-center gap-4 p-4">
+      <div className="panel flex items-center gap-3 p-4">
         <div className="relative h-24 w-24 shrink-0">
           <svg viewBox="0 0 110 110" className="h-full w-full -rotate-90">
-            <circle cx="55" cy="55" r={r2} fill="none" stroke="#1e293b" strokeWidth="9" />
+            <circle cx="55" cy="55" r={r2} fill="none" stroke="var(--color-edge)" strokeWidth="9" />
             <circle
               cx="55"
               cy="55"
@@ -109,13 +109,13 @@ export default function DrmRow({ state }: { state: DashboardState }) {
       </div>
 
       {/* Financial Savings */}
-      <div className="panel flex items-center gap-4 p-4">
-        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+      <div className="panel flex items-center gap-3 p-4">
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[4px] bg-mint/10 text-mint border border-mint/20">
           <BadgeIndianRupee size={30} />
         </span>
         <div>
           <span className="text-xs font-semibold text-dim uppercase tracking-wide">Projected Monthly Savings</span>
-          <p className="mt-1 font-mono text-2xl font-bold text-emerald-400 tracking-tight">
+          <p className="mt-1 font-mono text-2xl font-bold text-mint tracking-tight">
             ₹{monthlyCr} Cr <span className="text-xs font-sans text-dim font-normal">/ month</span>
           </p>
           <p className="mt-1 text-xs text-dim">

@@ -1,6 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+/**
+ * UI language (en / hi), held in an external store for the same reasons as the
+ * theme: persisted in localStorage, readable without a setState-in-effect, and
+ * with a deterministic server snapshot so hydration never mismatches.
+ */
+import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import dict, { type Lang } from "./translations";
 
 interface LangCtx {
@@ -16,28 +21,71 @@ const Ctx = createContext<LangCtx>({
 });
 
 const STORAGE_KEY = "railrakshak.lang";
+const EVENT = "rr-lang";
+const listeners = new Set<() => void>();
+let snapshot: Lang | null = null;
+
+function readStored(): Lang {
+  if (typeof window === "undefined") return "en";
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    return saved === "hi" || saved === "en" ? saved : "en";
+  } catch {
+    return "en";
+  }
+}
+
+function getSnapshot(): Lang {
+  if (snapshot === null) snapshot = readStored();
+  return snapshot;
+}
+
+function getServerSnapshot(): Lang {
+  return "en";
+}
+
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  const onStorage = () => {
+    snapshot = readStored();
+    onChange();
+  };
+  // "rr-lang" keeps the old cross-component contract working; "storage" covers
+  // a second tab.
+  window.addEventListener(EVENT, onChange);
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(onChange);
+    window.removeEventListener(EVENT, onChange);
+    window.removeEventListener("storage", onStorage);
+  };
+}
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("en");
+  const lang = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) as Lang | null;
-    if (saved === "hi" || saved === "en") setLangState(saved);
-  }, []);
+  const value = useMemo<LangCtx>(
+    () => ({
+      lang,
+      setLang: (l: Lang) => {
+        snapshot = l;
+        try {
+          window.localStorage.setItem(STORAGE_KEY, l);
+        } catch {
+          /* private mode */
+        }
+        window.dispatchEvent(new Event(EVENT));
+      },
+      t: (key: string) => {
+        const entry = dict[key];
+        if (!entry) return key;
+        return entry[lang] ?? entry.en ?? key;
+      },
+    }),
+    [lang]
+  );
 
-  function setLang(l: Lang) {
-    setLangState(l);
-    localStorage.setItem(STORAGE_KEY, l);
-    window.dispatchEvent(new Event("rr-lang"));
-  }
-
-  function t(key: string): string {
-    const entry = dict[key];
-    if (!entry) return key;
-    return entry[lang] ?? entry.en ?? key;
-  }
-
-  return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useLang() {
